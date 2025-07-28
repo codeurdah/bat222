@@ -120,7 +120,9 @@ const Transfers: React.FC = () => {
                                transferData.recipientType === 'external' ? 'Virement Externe' :
                                'Virement Crypto (FIAT)';
       
-      alert(`✅ Virement soumis avec succès !
+      // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+      setTimeout(() => {
+        alert(`✅ Virement soumis avec succès !
 
 Détails du virement :
 • Référence : ${transferId}
@@ -135,26 +137,29 @@ Détails du virement :
 
 Votre virement est en attente de validation par l'administrateur.
 Vous recevrez une notification une fois traité.`);
+      }, 100);
 
       // Reset form but stay on page
-      const shouldReset = window.confirm('Voulez-vous effectuer un nouveau virement ?\n\nCliquez "OK" pour réinitialiser le formulaire\nCliquez "Annuler" pour rester sur ce virement');
+      setTimeout(() => {
+        const shouldReset = window.confirm('Voulez-vous effectuer un nouveau virement ?\n\nCliquez "OK" pour réinitialiser le formulaire\nCliquez "Annuler" pour rester sur ce virement');
       
-      if (shouldReset) {
-        setTransferData({
-          fromAccount: '',
-          toAccount: '',
-          recipientType: 'internal',
-          amount: 0,
-          currency: 'EUR',
-          description: '',
-          recipientName: '',
-          recipientIban: '',
-          recipientBank: '',
-          recipientSwift: '',
-          cryptoWallet: '',
-          cryptoCurrency: 'BTC'
-        });
-      }
+        if (shouldReset) {
+          setTransferData({
+            fromAccount: '',
+            toAccount: '',
+            recipientType: 'internal',
+            amount: 0,
+            currency: 'EUR',
+            description: '',
+            recipientName: '',
+            recipientIban: '',
+            recipientBank: '',
+            recipientSwift: '',
+            cryptoWallet: '',
+            cryptoCurrency: 'BTC'
+          });
+        }
+      }, 500);
       
     } catch (error) {
       console.error('❌ Erreur lors du virement:', error);

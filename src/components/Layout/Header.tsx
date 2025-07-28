@@ -41,7 +41,10 @@ const Header: React.FC = () => {
   const handleExtendSession = () => {
     resetTimer();
     setShowSessionInfo(false);
-    alert('✅ Session prolongée de 5 minutes supplémentaires');
+    // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+    setTimeout(() => {
+      alert('✅ Session prolongée de 5 minutes supplémentaires');
+    }, 100);
   };
 
   return (

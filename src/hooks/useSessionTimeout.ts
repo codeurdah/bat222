@@ -85,8 +85,8 @@ export const useSessionTimeout = ({
     const timeSinceLastActivity = now - lastActivityRef.current;
     
     // Only reset if there's been significant time since last activity (prevent excessive resets)
-    // Increase threshold to prevent notification clicks from resetting timer
-    if (timeSinceLastActivity > 30000) { // 30 seconds threshold
+    // Increase threshold to prevent notification clicks and confirmations from resetting timer
+    if (timeSinceLastActivity > 60000) { // 60 seconds threshold to avoid confirmation resets
       resetTimer();
     }
   }, [resetTimer, isAuthenticated]);
@@ -122,10 +122,14 @@ export const useSessionTimeout = ({
     // Add specific click handler that ignores notification area clicks
     const handleClick = (event: Event) => {
       const target = event.target as HTMLElement;
-      // Don't reset timer for clicks on notification dropdown or header elements
+      // Don't reset timer for clicks on notification dropdown, header elements, or modal confirmations
       if (target.closest('.notification-dropdown') || 
           target.closest('.session-info-dropdown') ||
-          target.closest('header')) {
+          target.closest('header') ||
+          target.closest('.modal') ||
+          target.closest('.fixed.inset-0') ||
+          target.closest('[role="dialog"]') ||
+          target.closest('.swal2-container')) { // Sweet Alert modals if used
         return;
       }
       trackActivity();

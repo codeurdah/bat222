@@ -97,7 +97,10 @@ const LoanValidation: React.FC = () => {
         // Mettre à jour le statut dans la base de données
         loanApplicationService.updateStatus(applicationId, 'approved', currentUser?.id || 'admin')
           .then(() => {
-            alert('✅ Demande de crédit approuvée avec succès !\n\nLe client sera notifié par email et le prêt sera activé dans son compte.');
+            // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+            setTimeout(() => {
+              alert('✅ Demande de crédit approuvée avec succès !\n\nLe client sera notifié par email et le prêt sera activé dans son compte.');
+            }, 100);
             
             // Rafraîchir les données
             window.location.reload();
@@ -121,7 +124,10 @@ const LoanValidation: React.FC = () => {
         // Mettre à jour le statut dans la base de données
         loanApplicationService.updateStatus(applicationId, 'rejected', currentUser?.id || 'admin')
           .then(() => {
-            alert('✅ Demande de crédit rejetée.\n\nLe client sera notifié par email avec les raisons du refus.');
+            // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+            setTimeout(() => {
+              alert('✅ Demande de crédit rejetée.\n\nLe client sera notifié par email avec les raisons du refus.');
+            }, 100);
             
             // Rafraîchir les données
             window.location.reload();

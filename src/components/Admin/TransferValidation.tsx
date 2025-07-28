@@ -102,7 +102,10 @@ const TransferValidation: React.FC = () => {
         // Mettre à jour le statut à "completed"
         await transactionService.updateStatus(transferId, 'completed');
         
-        alert('✅ Virement validé avec succès !\n\nLe client sera notifié et les soldes des comptes ont été mis à jour.');
+        // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+        setTimeout(() => {
+          alert('✅ Virement validé avec succès !\n\nLe client sera notifié et les soldes des comptes ont été mis à jour.');
+        }, 100);
         
         // Rafraîchir les données
         await refetchTransactions();
@@ -133,7 +136,10 @@ const TransferValidation: React.FC = () => {
       // Mettre à jour le statut à "failed" avec le motif
       await transactionService.updateStatusWithReason(selectedTransaction.id, 'failed', rejectReason);
       
-      alert('✅ Virement rejeté.\n\nLe client sera notifié avec le motif du rejet.');
+      // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+      setTimeout(() => {
+        alert('✅ Virement rejeté.\n\nLe client sera notifié avec le motif du rejet.');
+      }, 100);
       
       // Rafraîchir les données
       await refetchTransactions();
