@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUserAccounts, useUsers, useAllTransactions } from '../../hooks/useData';
+import { transactionService } from '../../services/database';
 import { formatCurrency } from '../../utils/calculations';
 
 const Transfers: React.FC = () => {
@@ -72,6 +73,18 @@ const Transfers: React.FC = () => {
     setIsProcessing(true);
 
     try {
+      // Préparer les détails du destinataire selon le type
+      let recipientDetails = '';
+      if (transferData.recipientType === 'internal') {
+        const toAccount = otherAccounts.find(acc => acc.id === transferData.toAccount);
+        const recipient = otherUsers.find(u => u.id === toAccount?.userId);
+        recipientDetails = `${recipient?.firstName} ${recipient?.lastName} - ${toAccount?.accountNumber}`;
+      } else if (transferData.recipientType === 'external') {
+        recipientDetails = `${transferData.recipientName} - IBAN: ${transferData.recipientIban} - SWIFT: ${transferData.recipientSwift}`;
+      } else {
+        recipientDetails = `${transferData.recipientName} - ${transferData.cryptoCurrency}: ${transferData.cryptoWallet}`;
+      }
+
       // Créer la transaction dans la base de données
       const transactionData = {
         fromAccountId: transferData.fromAccount,
@@ -79,45 +92,37 @@ const Transfers: React.FC = () => {
         amount: transferData.amount,
         currency: transferData.currency,
         type: 'transfer' as const,
-        description: transferData.description || `Virement ${
+        description: `Virement ${
           transferData.recipientType === 'internal' ? 'interne' :
           transferData.recipientType === 'external' ? 'externe' :
           'crypto'
-        } - ${transferData.recipientName || 'Destinataire'}`,
+        } vers ${recipientDetails}${transferData.description ? ` - ${transferData.description}` : ''} - Frais: ${formatCurrency(fees, transferData.currency)}`,
         status: 'pending' as const
       };
 
       const newTransaction = await transactionService.create(transactionData);
       console.log('✅ Transaction créée:', newTransaction);
 
-      // Mettre à jour le solde du compte émetteur (débit)
-      const fees = transferData.recipientType === 'internal' 
-        ? transferData.amount * 0.01
-        : transferData.amount * 0.03;
-      const totalAmount = transferData.amount + fees;
-      
-      // Note: En production, ceci serait fait côté serveur avec des transactions atomiques
-      // Ici on simule juste la déduction du solde
-      
       const transferId = newTransaction.id.slice(-8);
       const transferTypeLabel = transferData.recipientType === 'internal' ? 'Virement Interne' :
                                transferData.recipientType === 'external' ? 'Virement Externe' :
                                'Virement Crypto (FIAT)';
       
-      alert(`✅ Virement effectué avec succès !
+      alert(`✅ Virement soumis avec succès !
 
 Détails du virement :
 • Référence : ${transferId}
 • Type : ${transferTypeLabel}
 • Montant : ${formatCurrency(transferData.amount, transferData.currency)}
 • Frais : ${formatCurrency(fees, transferData.currency)}
-• Total débité : ${formatCurrency(totalAmount, transferData.currency)}
+• Total à débiter : ${formatCurrency(totalAmount, transferData.currency)}
 • Compte émetteur : ${fromAccount.accountNumber}
-• Bénéficiaire : ${transferData.recipientName || 'Client interne'}
+• Bénéficiaire : ${recipientDetails}
 • Description : ${transferData.description}
+• Statut : En attente de validation
 
-Le virement sera traité dans les prochaines minutes.
-Vous recevrez une confirmation par email.`);
+Votre virement est en attente de validation par l'administrateur.
+Vous recevrez une notification une fois traité.`);
 
       // Reset form
       setTransferData({
