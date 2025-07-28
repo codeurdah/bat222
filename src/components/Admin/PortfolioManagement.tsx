@@ -12,11 +12,11 @@ import {
   Target,
   Activity
 } from 'lucide-react';
-import { useAccounts, useLoans, useUsers } from '../../hooks/useData';
+import { useAllAccounts, useLoans, useUsers } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const PortfolioManagement: React.FC = () => {
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAllAccounts();
   const { loans: mockLoans, loading: loansLoading, error: loansError } = useLoans();
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedPeriod, setSelectedPeriod] = useState<'1M' | '3M' | '6M' | '1Y'>('3M');

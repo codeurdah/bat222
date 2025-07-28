@@ -14,13 +14,15 @@ import {
   Activity
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAccounts, useTransactions } from '../../hooks/useData';
+import { useUserAccounts, useUserTransactions } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const AccountsView: React.FC = () => {
   const { user } = useAuth();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
-  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useUserAccounts(user?.id);
+  
+  const userAccountIds = mockAccounts.map(acc => acc.id);
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useUserTransactions(userAccountIds);
   const [showBalances, setShowBalances] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');

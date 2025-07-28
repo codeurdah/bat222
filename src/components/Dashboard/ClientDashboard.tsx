@@ -10,13 +10,15 @@ import {
   Calendar
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAccounts, useTransactions, useLoans } from '../../hooks/useData';
+import { useUserAccounts, useUserTransactions, useLoans } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const ClientDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
-  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useUserAccounts(user?.id);
+  
+  const userAccountIds = mockAccounts.map(acc => acc.id);
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useUserTransactions(userAccountIds);
   const { loans: mockLoans, loading: loansLoading, error: loansError } = useLoans();
 
   if (accountsLoading || transactionsLoading || loansLoading) {

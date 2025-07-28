@@ -19,12 +19,12 @@ import {
   Upload
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAccounts } from '../../hooks/useData';
+import { useUserAccounts } from '../../hooks/useData';
 import { generateRIB, formatRIBForEmail } from '../../utils/ribGenerator';
 
 const ClientProfile: React.FC = () => {
   const { user } = useAuth();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useUserAccounts(user?.id);
   const [isEditing, setIsEditing] = useState(false);
   const [showRIB, setShowRIB] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);

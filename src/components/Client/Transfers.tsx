@@ -11,14 +11,14 @@ import {
   Clock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useAccounts, useUsers, useTransactions } from '../../hooks/useData';
+import { useUserAccounts, useUsers, useAllTransactions } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const Transfers: React.FC = () => {
   const { user } = useAuth();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useUserAccounts(user?.id);
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
-  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useAllTransactions();
   const [activeTab, setActiveTab] = useState<'send' | 'history'>('send');
   const [transferData, setTransferData] = useState({
     fromAccount: '',

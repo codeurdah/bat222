@@ -9,13 +9,13 @@ import {
   Activity,
   CheckCircle
 } from 'lucide-react';
-import { useUsers, useAccounts, useTransactions, useLoanApplications } from '../../hooks/useData';
+import { useUsers, useAllAccounts, useAllTransactions, useLoanApplications } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const AdminDashboard: React.FC = () => {
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
-  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAllAccounts();
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useAllTransactions();
   const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
 
   if (usersLoading || accountsLoading || transactionsLoading || applicationsLoading) {

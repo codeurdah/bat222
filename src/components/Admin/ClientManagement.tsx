@@ -17,13 +17,14 @@ import {
   X
 } from 'lucide-react';
 import { useUsers, useAccounts } from '../../hooks/useData';
+import { useUsers, useAllAccounts } from '../../hooks/useData';
 import { User, Account } from '../../types';
 import { formatCurrency } from '../../utils/calculations';
 import { generateRIB, formatRIBForEmail } from '../../utils/ribGenerator';
 
 const ClientManagement: React.FC = () => {
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAllAccounts();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended'>('all');
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
