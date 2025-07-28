@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     logger.info('User logged out', { username: user?.username });
-    await supabase.auth.signOut();
+    localStorage.removeItem('currentUser');
     setUser(null);
   };
 
