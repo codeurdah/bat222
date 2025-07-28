@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { User, Account, Transaction, LoanApplication, Loan } from '../types';
 import { 
   userService, 
