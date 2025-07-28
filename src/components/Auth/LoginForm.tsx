@@ -33,7 +33,7 @@ const LoginForm: React.FC = () => {
             Connexion Sécurisée
           </h2>
           <p className="text-gray-600">
-            Accédez à votre espace de gestion microfinance
+            Accédez à votre espace de gestion
           </p>
         </div>
 
