@@ -13,11 +13,14 @@ import {
   Filter,
   Search
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useLoanApplications, useUsers } from '../../hooks/useData';
+import { loanApplicationService } from '../../services/database';
 import { LoanApplication, User as UserType } from '../../types';
 import { formatCurrency, calculateMonthlyPayment } from '../../utils/calculations';
 
 const LoanValidation: React.FC = () => {
+  const { user } = useAuth();
   const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -380,9 +383,9 @@ Statut: ${getStatusLabel(application.status)}
                             </button>
                           </>
                         )}
-                        <button 
+                        <button
                           onClick={() => handleDownload(application.id)}
-                          className="p-1 text-gray-600 hover:text-gray-800" 
+                          className="p-1 text-gray-600 hover:text-gray-800"
                           title="Télécharger"
                         >
                           <Download className="h-4 w-4" />
