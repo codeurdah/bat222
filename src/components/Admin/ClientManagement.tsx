@@ -16,7 +16,6 @@ import {
   Save,
   X
 } from 'lucide-react';
-import { useUsers, useAccounts } from '../../hooks/useData';
 import { useUsers, useAllAccounts } from '../../hooks/useData';
 import { User, Account } from '../../types';
 import { formatCurrency } from '../../utils/calculations';
