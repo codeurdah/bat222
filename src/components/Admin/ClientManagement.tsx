@@ -21,6 +21,7 @@ import { userService, accountService } from '../../services/database';
 import { User, Account } from '../../types';
 import { formatCurrency } from '../../utils/calculations';
 import { generateRIB, formatRIBForEmail } from '../../utils/ribGenerator';
+import { disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const ClientManagement: React.FC = () => {
   const { users: mockUsers, loading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers();
@@ -109,6 +110,9 @@ const ClientManagement: React.FC = () => {
 
   const handleSaveNewClient = async () => {
     setIsCreatingClient(true);
+    
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(20000); // 20 secondes
     
     try {
       // Validation des champs requis

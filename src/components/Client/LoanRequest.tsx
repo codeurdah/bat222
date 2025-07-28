@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { calculateMonthlyPayment, formatCurrency } from '../../utils/calculations';
 import { loanApplicationService } from '../../services/database';
 import { useNotifications } from '../../hooks/useNotifications';
+import { disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const LoanRequest: React.FC = () => {
   const { user } = useAuth();
@@ -63,6 +64,9 @@ const LoanRequest: React.FC = () => {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(15000); // 15 secondes
     
     try {
       // Validation des champs obligatoires

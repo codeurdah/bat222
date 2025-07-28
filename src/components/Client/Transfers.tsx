@@ -15,6 +15,7 @@ import { useUserAccounts, useUsers, useAllTransactions } from '../../hooks/useDa
 import { transactionService } from '../../services/database';
 import { formatCurrency } from '../../utils/calculations';
 import { useNotifications } from '../../hooks/useNotifications';
+import { disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const Transfers: React.FC = () => {
   const { user } = useAuth();
@@ -49,6 +50,10 @@ const Transfers: React.FC = () => {
 
   const handleTransfer = async () => {
     // Validation des champs requis selon le type de virement
+    
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(15000); // 15 secondes
+    
     const isValidInternal = transferData.recipientType === 'internal' && transferData.toAccount;
     const isValidExternal = transferData.recipientType === 'external' && 
       transferData.recipientName && transferData.recipientIban && transferData.recipientSwift;

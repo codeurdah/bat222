@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Transaction, User as UserType, Account } from '../../types';
 import { formatCurrency } from '../../utils/calculations';
 import { transactionService } from '../../services/database';
+import { disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const TransferValidation: React.FC = () => {
   const { user } = useAuth();
@@ -96,6 +97,9 @@ const TransferValidation: React.FC = () => {
   };
 
   const handleApprove = async (transferId: string) => {
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(10000); // 10 secondes
+    
     if (window.confirm('Êtes-vous sûr de vouloir valider ce virement ?')) {
       setProcessingId(transferId);
       try {
@@ -126,6 +130,9 @@ const TransferValidation: React.FC = () => {
   };
 
   const confirmReject = async () => {
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(10000); // 10 secondes
+    
     if (!selectedTransaction || !rejectReason.trim()) {
       alert('Veuillez indiquer un motif de rejet');
       return;

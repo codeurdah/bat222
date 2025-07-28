@@ -2,7 +2,7 @@ import React from 'react';
 import { LogOut, User, Bell, X, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
-import { useSessionTimeout } from '../../hooks/useSessionTimeout';
+import { useSessionTimeout, disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
@@ -39,12 +39,15 @@ const Header: React.FC = () => {
   };
 
   const handleExtendSession = () => {
+    // Désactiver temporairement le timer pendant l'extension
+    disableSessionTimer(5000); // 5 secondes
+    
     resetTimer();
     setShowSessionInfo(false);
-    // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+    
     setTimeout(() => {
       alert('✅ Session prolongée de 5 minutes supplémentaires');
-    }, 100);
+    }, 200);
   };
 
   return (

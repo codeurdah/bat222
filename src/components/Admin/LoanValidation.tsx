@@ -18,6 +18,7 @@ import { LoanApplication, User as UserType } from '../../types';
 import { formatCurrency, calculateMonthlyPayment } from '../../utils/calculations';
 import { loanApplicationService } from '../../services/database';
 import { useAuth } from '../../context/AuthContext';
+import { disableSessionTimer } from '../../hooks/useSessionTimeout';
 
 const LoanValidation: React.FC = () => {
   const { user: currentUser } = useAuth();
@@ -92,6 +93,9 @@ const LoanValidation: React.FC = () => {
   };
 
   const handleApprove = (applicationId: string) => {
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(10000); // 10 secondes
+    
     if (window.confirm('Êtes-vous sûr de vouloir approuver cette demande de crédit ?')) {
       try {
         // Mettre à jour le statut dans la base de données
@@ -117,6 +121,9 @@ const LoanValidation: React.FC = () => {
   };
 
   const handleReject = (applicationId: string) => {
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(10000); // 10 secondes
+    
     const reason = prompt('Veuillez indiquer la raison du rejet (optionnel) :');
     
     if (window.confirm('Êtes-vous sûr de vouloir rejeter cette demande de crédit ?')) {

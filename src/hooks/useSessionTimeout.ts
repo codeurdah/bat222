@@ -2,6 +2,17 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger';
 
+// Variable globale pour désactiver temporairement le timer
+let sessionTimerDisabled = false;
+
+// Fonction pour désactiver temporairement le timer
+export const disableSessionTimer = (duration: number = 10000) => {
+  sessionTimerDisabled = true;
+  setTimeout(() => {
+    sessionTimerDisabled = false;
+  }, duration);
+};
+
 interface UseSessionTimeoutOptions {
   timeoutMinutes?: number;
   warningMinutes?: number;
@@ -21,7 +32,7 @@ export const useSessionTimeout = ({
   const lastActivityRef = useRef<number>(Date.now());
 
   const resetTimer = useCallback(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || sessionTimerDisabled) return;
 
     // Clear existing timers
     if (timeoutRef.current) {
@@ -79,14 +90,13 @@ export const useSessionTimeout = ({
   }, [logout, onTimeout]);
 
   const trackActivity = useCallback(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || sessionTimerDisabled) return;
     
     const now = Date.now();
     const timeSinceLastActivity = now - lastActivityRef.current;
     
-    // Only reset if there's been significant time since last activity (prevent excessive resets)
-    // Increase threshold to prevent notification clicks and confirmations from resetting timer
-    if (timeSinceLastActivity > 60000) { // 60 seconds threshold to avoid confirmation resets
+    // Only reset if there's been significant time since last activity
+    if (timeSinceLastActivity > 120000) { // 2 minutes threshold to avoid any interference
       resetTimer();
     }
   }, [resetTimer, isAuthenticated]);
@@ -122,14 +132,18 @@ export const useSessionTimeout = ({
     // Add specific click handler that ignores notification area clicks
     const handleClick = (event: Event) => {
       const target = event.target as HTMLElement;
-      // Don't reset timer for clicks on notification dropdown, header elements, or modal confirmations
+      // Don't reset timer for ANY system interactions, modals, or confirmations
       if (target.closest('.notification-dropdown') || 
           target.closest('.session-info-dropdown') ||
           target.closest('header') ||
           target.closest('.modal') ||
           target.closest('.fixed.inset-0') ||
           target.closest('[role="dialog"]') ||
-          target.closest('.swal2-container')) { // Sweet Alert modals if used
+          target.closest('.swal2-container') ||
+          target.closest('button') ||
+          target.closest('form') ||
+          target.closest('.bg-white.rounded-xl') ||
+          sessionTimerDisabled) {
         return;
       }
       trackActivity();
