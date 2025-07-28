@@ -7,16 +7,23 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
-    if (login(username, password)) {
-      // Login successful - handled by AuthContext
-    } else {
-      setError('Nom d\'utilisateur ou mot de passe incorrect');
+    try {
+      const success = await login(username, password);
+      if (!success) {
+        setError('Nom d\'utilisateur ou mot de passe incorrect');
+      }
+    } catch (error) {
+      setError('Erreur de connexion. Veuillez réessayer.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,9 +105,17 @@ const LoginForm: React.FC = () => {
 
             <button
               type="submit"
-              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors"
+              disabled={isLoading}
+              className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Se connecter
+              {isLoading ? (
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Connexion...</span>
+                </div>
+              ) : (
+                'Se connecter'
+              )}
             </button>
           </form>
 

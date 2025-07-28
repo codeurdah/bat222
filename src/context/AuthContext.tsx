@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { mockUsers } from '../data/mockData';
+import { userService } from '../services/database';
 import { logger } from '../utils/logger';
 
 interface AuthContextType {
@@ -30,19 +30,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const login = (username: string, password: string): boolean => {
-    const foundUser = mockUsers.find(
-      u => u.username === username && u.password === password
-    );
-    
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('currentUser', JSON.stringify(foundUser));
-      logger.info('User logged in', { username: foundUser.username, role: foundUser.role });
-      return true;
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const foundUser = await userService.getByUsername(username);
+      
+      if (foundUser && foundUser.password === password) {
+        setUser(foundUser);
+        localStorage.setItem('currentUser', JSON.stringify(foundUser));
+        logger.info('User logged in', { username: foundUser.username, role: foundUser.role });
+        return true;
+      }
+      logger.warn('Failed login attempt', { username });
+      return false;
+    } catch (error) {
+      logger.error('Login error', error as Error);
+      return false;
     }
-    logger.warn('Failed login attempt', { username });
-    return false;
   };
 
   const logout = () => {
