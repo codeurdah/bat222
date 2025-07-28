@@ -68,7 +68,7 @@ const Header: React.FC = () => {
 
               {/* Session Info Dropdown */}
               {showSessionInfo && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div className="session-info-dropdown absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold text-gray-900">Session Active</h3>
@@ -124,7 +124,7 @@ const Header: React.FC = () => {
 
               {/* Notifications Dropdown */}
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div className="notification-dropdown absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                   <div className="p-4 border-b border-gray-200">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>

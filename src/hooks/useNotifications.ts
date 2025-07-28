@@ -207,10 +207,17 @@ export const useNotifications = () => {
 
     // Notification navigateur
     if (Notification.permission === 'granted') {
-      new Notification(newNotification.title, {
+      const browserNotification = new Notification(newNotification.title, {
         body: newNotification.message,
-        icon: '/BACI-Logo-slogan.png'
+        icon: '/BACI-Logo-slogan.png',
+        requireInteraction: false, // Don't require user interaction
+        silent: false
       });
+      
+      // Auto-close browser notification after 5 seconds to prevent interference
+      setTimeout(() => {
+        browserNotification.close();
+      }, 5000);
     }
   };
 

@@ -85,7 +85,8 @@ export const useSessionTimeout = ({
     const timeSinceLastActivity = now - lastActivityRef.current;
     
     // Only reset if there's been significant time since last activity (prevent excessive resets)
-    if (timeSinceLastActivity > 10000) { // 10 seconds threshold
+    // Increase threshold to prevent notification clicks from resetting timer
+    if (timeSinceLastActivity > 30000) { // 30 seconds threshold
       resetTimer();
     }
   }, [resetTimer, isAuthenticated]);
@@ -105,21 +106,32 @@ export const useSessionTimeout = ({
     // Start the timer when authenticated
     resetTimer();
 
-    // Activity event listeners
+    // Activity event listeners - exclude some events that shouldn't reset session
     const events = [
-      'mousedown',
       'mousemove',
       'keypress',
       'scroll',
-      'touchstart',
-      'click',
-      'focus'
+      'touchstart'
     ];
 
     // Add event listeners for user activity
     events.forEach(event => {
       document.addEventListener(event, trackActivity, true);
     });
+
+    // Add specific click handler that ignores notification area clicks
+    const handleClick = (event: Event) => {
+      const target = event.target as HTMLElement;
+      // Don't reset timer for clicks on notification dropdown or header elements
+      if (target.closest('.notification-dropdown') || 
+          target.closest('.session-info-dropdown') ||
+          target.closest('header')) {
+        return;
+      }
+      trackActivity();
+    };
+
+    document.addEventListener('click', handleClick, true);
 
     // Cleanup function
     return () => {
@@ -133,6 +145,8 @@ export const useSessionTimeout = ({
       events.forEach(event => {
         document.removeEventListener(event, trackActivity, true);
       });
+      
+      document.removeEventListener('click', handleClick, true);
     };
   }, [isAuthenticated, resetTimer, trackActivity]);
 
