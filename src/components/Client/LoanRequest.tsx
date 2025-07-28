@@ -109,25 +109,29 @@ Détails de votre demande :
 Votre demande sera examinée dans les 48h ouvrables.
 Vous recevrez une notification par email dès qu'une décision sera prise.`);
       
-      // Reset form
-      setCurrentStep(1);
-      setFormData({
-        loanType: 'personal',
-        amount: 10000,
-        currency: 'EUR',
-        duration: 24,
-        purpose: '',
-        monthlyIncome: 0,
-        employmentStatus: 'employed',
-        employerName: '',
-        workExperience: 0,
-        documents: {
-          incomeProof: null,
-          identityDocument: null,
-          residenceProof: null,
-          businessPlan: null
-        }
-      });
+      // Reset form but stay on page
+      const shouldReset = window.confirm('Voulez-vous faire une nouvelle demande de crédit ?\n\nCliquez "OK" pour réinitialiser le formulaire\nCliquez "Annuler" pour rester sur cette demande');
+      
+      if (shouldReset) {
+        setCurrentStep(1);
+        setFormData({
+          loanType: 'personal',
+          amount: 10000,
+          currency: 'EUR',
+          duration: 24,
+          purpose: '',
+          monthlyIncome: 0,
+          employmentStatus: 'employed',
+          employerName: '',
+          workExperience: 0,
+          documents: {
+            incomeProof: null,
+            identityDocument: null,
+            residenceProof: null,
+            businessPlan: null
+          }
+        });
+      }
       
     } catch (error) {
       console.error('❌ Erreur lors de la création de la demande:', error);

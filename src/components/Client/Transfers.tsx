@@ -124,21 +124,25 @@ Détails du virement :
 Votre virement est en attente de validation par l'administrateur.
 Vous recevrez une notification une fois traité.`);
 
-      // Reset form
-      setTransferData({
-        fromAccount: '',
-        toAccount: '',
-        recipientType: 'internal',
-        amount: 0,
-        currency: 'EUR',
-        description: '',
-        recipientName: '',
-        recipientIban: '',
-        recipientBank: '',
-        recipientSwift: '',
-        cryptoWallet: '',
-        cryptoCurrency: 'BTC'
-      });
+      // Reset form but stay on page
+      const shouldReset = window.confirm('Voulez-vous effectuer un nouveau virement ?\n\nCliquez "OK" pour réinitialiser le formulaire\nCliquez "Annuler" pour rester sur ce virement');
+      
+      if (shouldReset) {
+        setTransferData({
+          fromAccount: '',
+          toAccount: '',
+          recipientType: 'internal',
+          amount: 0,
+          currency: 'EUR',
+          description: '',
+          recipientName: '',
+          recipientIban: '',
+          recipientBank: '',
+          recipientSwift: '',
+          cryptoWallet: '',
+          cryptoCurrency: 'BTC'
+        });
+      }
       
     } catch (error) {
       console.error('❌ Erreur lors du virement:', error);
@@ -575,6 +579,22 @@ Vous recevrez une confirmation par email.`);
       {/* Tab Content */}
       <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
         {activeTab === 'send' ? renderTransferForm() : renderTransferHistory()}
+      </div>
+
+      {/* Success Message */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mt-0.5">
+            <span className="text-white text-xs">✓</span>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-green-800">Information</h4>
+            <p className="text-sm text-green-700 mt-1">
+              Après avoir effectué un virement, vous restez connecté sur votre compte. 
+              Le virement sera traité par l'administrateur dans les plus brefs délais.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
