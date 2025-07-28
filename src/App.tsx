@@ -1,6 +1,10 @@
 import React from 'react';
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/Common/ErrorBoundary';
+import MaintenanceMode from './components/Common/MaintenanceMode';
+import { config } from './config/environment';
+import { logger } from './utils/logger';
 import LoginForm from './components/Auth/LoginForm';
 import Header from './components/Layout/Header';
 import Sidebar from './components/Layout/Sidebar';
@@ -18,6 +22,13 @@ import LoanValidation from './components/Admin/LoanValidation';
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Check for maintenance mode
+  if (config.features.maintenanceMode) {
+    return <MaintenanceMode />;
+  }
+
+  logger.info('App loaded', { user: user?.username, environment: config.app.environment });
 
   if (!isAuthenticated) {
     return <LoginForm />;
@@ -63,9 +74,11 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

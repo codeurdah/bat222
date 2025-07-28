@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { mockUsers } from '../data/mockData';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -37,12 +38,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem('currentUser', JSON.stringify(foundUser));
+      logger.info('User logged in', { username: foundUser.username, role: foundUser.role });
       return true;
     }
+    logger.warn('Failed login attempt', { username });
     return false;
   };
 
   const logout = () => {
+    logger.info('User logged out', { username: user?.username });
     setUser(null);
     localStorage.removeItem('currentUser');
   };
