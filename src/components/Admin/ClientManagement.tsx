@@ -302,7 +302,7 @@ const ClientManagement: React.FC = () => {
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                           <span className="text-orange-600 font-medium">
-                            {client.firstName[0]}{client.lastName[0]}
+                            {(client.firstName || '')[0]}{(client.lastName || '')[0]}
                           </span>
                         </div>
                         <div>
