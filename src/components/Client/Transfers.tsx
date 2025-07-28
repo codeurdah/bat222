@@ -147,7 +147,7 @@ Vous recevrez une confirmation par email.`);
     setIsProcessing(true);
 
     // Old simulation code - keeping as backup
-    setTimeout(() => {</parameter>
+    setTimeout(() => {
 
       const transferId = `TR${Date.now().toString().slice(-8)}`;
       const transferTypeLabel = transferData.recipientType === 'internal' ? 'Virement Interne' :

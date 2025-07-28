@@ -121,7 +121,7 @@ Vous recevrez une notification par email dès qu'une décision sera prise.`);
     setIsSubmitting(true);
     
     // Old simulation code - keeping as backup
-    setTimeout(() => {</parameter>
+    setTimeout(() => {
 
       alert(`🎉 Demande de crédit soumise avec succès !
 
