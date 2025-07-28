@@ -66,9 +66,9 @@ const ClientManagement: React.FC = () => {
   const clients = mockUsers.filter(user => user.role === 'client');
   
   const filteredClients = clients.filter(client => {
-    const matchesSearch = client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         client.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (client.firstName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (client.lastName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (client.email || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     if (filterStatus === 'all') return matchesSearch;
     // For demo purposes, we'll consider all clients as active
