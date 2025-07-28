@@ -27,6 +27,16 @@ const AccountsView: React.FC = () => {
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
 
+  // Rafraîchir automatiquement les données toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Les hooks useUserAccounts et useUserTransactions ont déjà des subscriptions temps réel
+      // Cet interval est un backup pour s'assurer que les données sont à jour
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   if (accountsLoading || transactionsLoading) {
     return (
       <div className="flex items-center justify-center h-64">

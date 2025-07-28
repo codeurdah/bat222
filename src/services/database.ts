@@ -367,6 +367,14 @@ export const transactionService = {
 
   async updateStatus(id: string, status: 'pending' | 'completed' | 'failed'): Promise<Transaction> {
     try {
+      // Si la transaction est validée, mettre à jour les soldes des comptes
+      if (status === 'completed') {
+        const transaction = await this.getById(id);
+        if (transaction) {
+          await this.updateAccountBalances(transaction);
+        }
+      }
+      
       const { data, error } = await supabase
         .from('transactions')
         .update({ status })
@@ -388,6 +396,123 @@ export const transactionService = {
       };
     } catch (error) {
       logger.error('Error updating transaction status', error as Error);
+      throw error;
+    }
+  },
+
+  async getById(id: string): Promise<Transaction | null> {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data ? {
+        id: data.id,
+        fromAccountId: data.from_account_id,
+        toAccountId: data.to_account_id,
+        amount: parseFloat(data.amount),
+        currency: data.currency,
+        type: data.type,
+        description: data.description,
+        status: data.status,
+        createdAt: data.created_at
+      } : null;
+    } catch (error) {
+      logger.error('Error fetching transaction by ID', error as Error);
+      return null;
+    }
+  },
+
+  async updateAccountBalances(transaction: Transaction): Promise<void> {
+    try {
+      // Mettre à jour le compte émetteur (débit)
+      if (transaction.fromAccountId) {
+        const { error: fromError } = await supabase.rpc('update_account_balance', {
+          account_id: transaction.fromAccountId,
+          amount: -transaction.amount,
+          transaction_type: 'debit'
+        });
+        
+        if (fromError) {
+          // Fallback: mise à jour directe si la fonction RPC n'existe pas
+          const { data: fromAccount } = await supabase
+            .from('accounts')
+            .select('balance')
+            .eq('id', transaction.fromAccountId)
+            .single();
+            
+          if (fromAccount) {
+            await supabase
+              .from('accounts')
+              .update({ balance: parseFloat(fromAccount.balance) - transaction.amount })
+              .eq('id', transaction.fromAccountId);
+          }
+        }
+      }
+
+      // Mettre à jour le compte bénéficiaire (crédit)
+      if (transaction.toAccountId) {
+        const { error: toError } = await supabase.rpc('update_account_balance', {
+          account_id: transaction.toAccountId,
+          amount: transaction.amount,
+          transaction_type: 'credit'
+        });
+        
+        if (toError) {
+          // Fallback: mise à jour directe si la fonction RPC n'existe pas
+          const { data: toAccount } = await supabase
+            .from('accounts')
+            .select('balance')
+            .eq('id', transaction.toAccountId)
+            .single();
+            
+          if (toAccount) {
+            await supabase
+              .from('accounts')
+              .update({ balance: parseFloat(toAccount.balance) + transaction.amount })
+              .eq('id', transaction.toAccountId);
+          }
+        }
+      }
+
+      // Pour les dépôts (pas de compte émetteur)
+      if (transaction.type === 'deposit' && transaction.toAccountId) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('balance')
+          .eq('id', transaction.toAccountId)
+          .single();
+          
+        if (account) {
+          await supabase
+            .from('accounts')
+            .update({ balance: parseFloat(account.balance) + transaction.amount })
+            .eq('id', transaction.toAccountId);
+        }
+      }
+
+      // Pour les retraits (pas de compte bénéficiaire)
+      if (transaction.type === 'withdrawal' && transaction.fromAccountId) {
+        const { data: account } = await supabase
+          .from('accounts')
+          .select('balance')
+          .eq('id', transaction.fromAccountId)
+          .single();
+          
+        if (account) {
+          await supabase
+            .from('accounts')
+            .update({ balance: parseFloat(account.balance) - transaction.amount })
+            .eq('id', transaction.fromAccountId);
+        }
+      }
+
+      logger.info('Account balances updated successfully', { transactionId: transaction.id });
+    } catch (error) {
+      logger.error('Error updating account balances', error as Error);
       throw error;
     }
   },

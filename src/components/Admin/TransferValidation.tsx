@@ -102,7 +102,7 @@ const TransferValidation: React.FC = () => {
         // Mettre à jour le statut à "completed"
         await transactionService.updateStatus(transferId, 'completed');
         
-        alert('✅ Virement validé avec succès !\n\nLe client sera notifié et les fonds seront transférés.');
+        alert('✅ Virement validé avec succès !\n\nLe client sera notifié et les soldes des comptes ont été mis à jour.');
         
         // Rafraîchir les données
         await refetchTransactions();

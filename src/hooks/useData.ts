@@ -66,6 +66,33 @@ export const useUserAccounts = (userId: string | undefined) => {
     fetchAccounts();
   }, [userId]);
 
+  // Écouter les changements de solde en temps réel
+  useEffect(() => {
+    if (!userId) return;
+
+    const subscription = supabase
+      .channel('account_balance_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'accounts',
+          filter: `user_id=eq.${userId}`
+        },
+        (payload) => {
+          logger.info('Account balance updated', payload);
+          // Rafraîchir les comptes quand un solde change
+          fetchAccounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [userId, fetchAccounts]);
+
   return { accounts, loading, error, refetch: fetchAccounts };
 };
 
@@ -92,6 +119,30 @@ export const useAllAccounts = () => {
   useEffect(() => {
     fetchAccounts();
   }, []);
+
+  // Écouter les changements de solde en temps réel pour tous les comptes
+  useEffect(() => {
+    const subscription = supabase
+      .channel('all_account_balance_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'accounts'
+        },
+        (payload) => {
+          logger.info('Account balance updated (admin view)', payload);
+          // Rafraîchir tous les comptes quand un solde change
+          fetchAccounts();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [fetchAccounts]);
 
   return { accounts, loading, error, refetch: fetchAccounts };
 };
