@@ -101,10 +101,17 @@ const ClientManagement: React.FC = () => {
   };
 
   const handleDeleteClient = (clientId: string) => {
+    // Désactiver le timer de session pendant l'opération
+    disableSessionTimer(10000); // 10 secondes
+    
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
       // In a real app, this would make an API call
       console.log('Deleting client:', clientId);
-      alert('Client supprimé avec succès');
+      
+      // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+      setTimeout(() => {
+        alert('✅ Client supprimé avec succès !');
+      }, 100);
     }
   };
 
