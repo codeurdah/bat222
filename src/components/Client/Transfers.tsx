@@ -14,9 +14,11 @@ import { useAuth } from '../../context/AuthContext';
 import { useUserAccounts, useUsers, useAllTransactions } from '../../hooks/useData';
 import { transactionService } from '../../services/database';
 import { formatCurrency } from '../../utils/calculations';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const Transfers: React.FC = () => {
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useUserAccounts(user?.id);
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useAllTransactions();
@@ -102,6 +104,16 @@ const Transfers: React.FC = () => {
 
       const newTransaction = await transactionService.create(transactionData);
       console.log('✅ Transaction créée:', newTransaction);
+
+      // Ajouter une notification locale
+      addNotification({
+        title: 'Virement soumis',
+        message: `Votre virement de ${formatCurrency(transferData.amount, transferData.currency)} a été soumis pour validation.`,
+        type: 'info',
+        read: false,
+        relatedId: newTransaction.id,
+        relatedType: 'transaction'
+      });
 
       const transferId = newTransaction.id.slice(-8);
       const transferTypeLabel = transferData.recipientType === 'internal' ? 'Virement Interne' :

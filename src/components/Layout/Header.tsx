@@ -1,47 +1,23 @@
 import React from 'react';
 import { LogOut, User, Bell, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [showNotifications, setShowNotifications] = React.useState(false);
 
-  const notifications = [
-    {
-      id: 1,
-      title: 'Nouvelle demande de crédit',
-      message: 'Jean Dupont a soumis une demande de crédit personnel',
-      time: '5 min',
-      type: 'info',
-      unread: true
-    },
-    {
-      id: 2,
-      title: 'Paiement en retard',
-      message: 'Marie Martin a un paiement en retard de 3 jours',
-      time: '1h',
-      type: 'warning',
-      unread: true
-    },
-    {
-      id: 3,
-      title: 'Nouveau client enregistré',
-      message: 'Pierre Dubois s\'est inscrit avec succès',
-      time: '2h',
-      type: 'success',
-      unread: false
-    },
-    {
-      id: 4,
-      title: 'Limite de crédit atteinte',
-      message: 'Le portefeuille a atteint 85% de sa limite',
-      time: '3h',
-      type: 'error',
-      unread: false
-    }
-  ];
-
-  const unreadCount = notifications.filter(n => n.unread).length;
+  const getTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60));
+    
+    if (diffInMinutes < 1) return 'À l\'instant';
+    if (diffInMinutes < 60) return `${diffInMinutes} min`;
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h`;
+    return `${Math.floor(diffInMinutes / 1440)}j`;
+  };
 
   const getNotificationColor = (type: string) => {
     switch (type) {
@@ -103,14 +79,15 @@ const Header: React.FC = () => {
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
+                        onClick={() => markAsRead(notification.id)}
                         className={`p-4 border-l-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${getNotificationColor(notification.type)} ${
-                          notification.unread ? 'bg-opacity-100' : 'bg-opacity-50'
+                          !notification.read ? 'bg-opacity-100' : 'bg-opacity-50'
                         }`}
                       >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
                             <h4 className={`text-sm font-medium ${
-                              notification.unread ? 'text-gray-900' : 'text-gray-700'
+                              !notification.read ? 'text-gray-900' : 'text-gray-700'
                             }`}>
                               {notification.title}
                             </h4>
@@ -120,9 +97,9 @@ const Header: React.FC = () => {
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-xs text-gray-500">
-                              {notification.time}
+                              {getTimeAgo(notification.timestamp)}
                             </span>
-                            {notification.unread && (
+                            {!notification.read && (
                               <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
                             )}
                           </div>
@@ -132,7 +109,10 @@ const Header: React.FC = () => {
                   </div>
                   
                   <div className="p-4 border-t border-gray-200">
-                    <button className="w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium">
+                    <button 
+                      onClick={markAllAsRead}
+                      className="w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium"
+                    >
                       Voir toutes les notifications
                     </button>
                   </div>

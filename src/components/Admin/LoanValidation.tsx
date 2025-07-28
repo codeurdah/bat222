@@ -16,8 +16,11 @@ import {
 import { useLoanApplications, useUsers } from '../../hooks/useData';
 import { LoanApplication, User as UserType } from '../../types';
 import { formatCurrency, calculateMonthlyPayment } from '../../utils/calculations';
+import { loanApplicationService } from '../../services/database';
+import { useAuth } from '../../context/AuthContext';
 
 const LoanValidation: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -92,7 +95,7 @@ const LoanValidation: React.FC = () => {
     if (window.confirm('Êtes-vous sûr de vouloir approuver cette demande de crédit ?')) {
       try {
         // Mettre à jour le statut dans la base de données
-        loanApplicationService.updateStatus(applicationId, 'approved', user?.id || 'admin')
+        loanApplicationService.updateStatus(applicationId, 'approved', currentUser?.id || 'admin')
           .then(() => {
             alert('✅ Demande de crédit approuvée avec succès !\n\nLe client sera notifié par email et le prêt sera activé dans son compte.');
             
@@ -116,7 +119,7 @@ const LoanValidation: React.FC = () => {
     if (window.confirm('Êtes-vous sûr de vouloir rejeter cette demande de crédit ?')) {
       try {
         // Mettre à jour le statut dans la base de données
-        loanApplicationService.updateStatus(applicationId, 'rejected', user?.id || 'admin')
+        loanApplicationService.updateStatus(applicationId, 'rejected', currentUser?.id || 'admin')
           .then(() => {
             alert('✅ Demande de crédit rejetée.\n\nLe client sera notifié par email avec les raisons du refus.');
             

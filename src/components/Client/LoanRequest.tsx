@@ -13,9 +13,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { calculateMonthlyPayment, formatCurrency } from '../../utils/calculations';
 import { loanApplicationService } from '../../services/database';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const LoanRequest: React.FC = () => {
   const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [formData, setFormData] = useState({
     loanType: 'personal' as 'personal' | 'investment' | 'business_real_estate' | 'personal_real_estate',
     amount: 10000,
@@ -96,6 +98,16 @@ const LoanRequest: React.FC = () => {
       });
 
       console.log('✅ Demande de crédit créée:', newApplication);
+
+      // Ajouter une notification locale
+      addNotification({
+        title: 'Demande de crédit soumise',
+        message: `Votre demande de crédit de ${formatCurrency(formData.amount, formData.currency)} a été soumise avec succès.`,
+        type: 'success',
+        read: false,
+        relatedId: newApplication.id,
+        relatedType: 'loan_application'
+      });
 
       alert(`🎉 Demande de crédit soumise avec succès !
 
