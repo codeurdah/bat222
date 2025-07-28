@@ -17,13 +17,14 @@ import {
   X
 } from 'lucide-react';
 import { useUsers, useAllAccounts } from '../../hooks/useData';
+import { userService, accountService } from '../../services/database';
 import { User, Account } from '../../types';
 import { formatCurrency } from '../../utils/calculations';
 import { generateRIB, formatRIBForEmail } from '../../utils/ribGenerator';
 
 const ClientManagement: React.FC = () => {
-  const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
-  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAllAccounts();
+  const { users: mockUsers, loading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError, refetch: refetchAccounts } = useAllAccounts();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended'>('all');
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
@@ -31,6 +32,7 @@ const ClientManagement: React.FC = () => {
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<User | null>(null);
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
   const [newClient, setNewClient] = useState({
     firstName: '',
     lastName: '',
@@ -105,29 +107,67 @@ const ClientManagement: React.FC = () => {
     }
   };
 
-  const handleSaveNewClient = () => {
-    // In a real app, this would make an API call
-    console.log('Creating new client:', newClient);
+  const handleSaveNewClient = async () => {
+    setIsCreatingClient(true);
     
-    // Send welcome email with credentials
-    sendWelcomeEmail(newClient);
-    
-    alert('Nouveau client créé avec succès');
-    setShowNewClientModal(false);
-    setNewClient({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      address: '',
-      username: '',
-      password: '',
-      accountType: 'courant',
-      initialAmount: 0,
-      photoId: null,
-      identityDocument: null,
-      residenceProof: null
-    });
+    try {
+      // Créer l'utilisateur dans la base de données
+      const newUser = await userService.create({
+        username: newClient.username,
+        password: newClient.password, // En production, hasher le mot de passe
+        role: 'client',
+        firstName: newClient.firstName,
+        lastName: newClient.lastName,
+        email: newClient.email,
+        phone: newClient.phone,
+        address: newClient.address
+      });
+      
+      // Générer un numéro de compte unique
+      const accountNumber = `TG53TG138010${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      // Créer le compte bancaire initial
+      await accountService.create({
+        userId: newUser.id,
+        accountNumber: accountNumber,
+        accountType: newClient.accountType === 'courant' ? 'current' : 'savings',
+        balance: newClient.initialAmount,
+        currency: 'EUR',
+        status: 'active'
+      });
+      
+      // Rafraîchir les données
+      await refetchUsers();
+      await refetchAccounts();
+      
+      // Envoyer l'email de bienvenue
+      sendWelcomeEmail(newClient);
+      
+      alert('✅ Nouveau client créé avec succès dans la base de données !');
+      
+      // Réinitialiser le formulaire
+      setShowNewClientModal(false);
+      setNewClient({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        address: '',
+        username: '',
+        password: '',
+        accountType: 'courant',
+        initialAmount: 0,
+        photoId: null,
+        identityDocument: null,
+        residenceProof: null
+      });
+      
+    } catch (error) {
+      console.error('Erreur lors de la création du client:', error);
+      alert('❌ Erreur lors de la création du client. Veuillez réessayer.');
+    } finally {
+      setIsCreatingClient(false);
+    }
   };
 
   const sendWelcomeEmail = (clientData: any) => {
@@ -658,16 +698,27 @@ const ClientManagement: React.FC = () => {
             <div className="p-6 border-t border-gray-200 flex justify-end space-x-4">
               <button
                 onClick={() => setShowNewClientModal(false)}
+                disabled={isCreatingClient}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSaveNewClient}
-                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                disabled={isCreatingClient}
+                className="flex items-center space-x-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Save className="h-4 w-4" />
-                <span>Créer le Client</span>
+                {isCreatingClient ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Création en cours...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Créer le Client</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
