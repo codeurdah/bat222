@@ -468,6 +468,22 @@ Numéro de référence : LR${Date.now().toString().slice(-6)}`);
           </div>
         </div>
       </div>
+
+      {/* Success Message */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mt-0.5">
+            <span className="text-white text-xs">i</span>
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-blue-800">Information</h4>
+            <p className="text-sm text-blue-700 mt-1">
+              Après avoir soumis votre demande de crédit, vous restez connecté sur votre compte. 
+              Votre demande sera examinée par l'administrateur dans les 48h ouvrables.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
