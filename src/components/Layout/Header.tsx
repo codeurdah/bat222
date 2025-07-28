@@ -1,12 +1,15 @@
 import React from 'react';
-import { LogOut, User, Bell, X } from 'lucide-react';
+import { LogOut, User, Bell, X, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useSessionTimeout } from '../../hooks/useSessionTimeout';
 
 const Header: React.FC = () => {
   const { user, logout } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { getRemainingTime, resetTimer } = useSessionTimeout();
   const [showNotifications, setShowNotifications] = React.useState(false);
+  const [showSessionInfo, setShowSessionInfo] = React.useState(false);
 
   const getTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -29,6 +32,18 @@ const Header: React.FC = () => {
     }
   };
 
+  const formatRemainingTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const handleExtendSession = () => {
+    resetTimer();
+    setShowSessionInfo(false);
+    alert('✅ Session prolongée de 5 minutes supplémentaires');
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -42,6 +57,58 @@ const Header: React.FC = () => {
           </div>
           
           <div className="flex items-center space-x-4">
+            <div className="relative">
+              <button 
+                onClick={() => setShowSessionInfo(!showSessionInfo)}
+                className="p-2 text-gray-400 hover:text-gray-500 relative"
+                title="Informations de session"
+              >
+                <Clock className="h-6 w-6" />
+              </button>
+
+              {/* Session Info Dropdown */}
+              {showSessionInfo && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-gray-900">Session Active</h3>
+                      <button
+                        onClick={() => setShowSessionInfo(false)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Temps restant :</span>
+                        <span className="text-lg font-bold text-orange-600">
+                          {formatRemainingTime(getRemainingTime())}
+                        </span>
+                      </div>
+                      
+                      <div className="bg-orange-50 p-3 rounded-lg">
+                        <p className="text-sm text-orange-800">
+                          <Clock className="h-4 w-4 inline mr-1" />
+                          Votre session expirera automatiquement après 5 minutes d'inactivité pour des raisons de sécurité.
+                        </p>
+                      </div>
+                      
+                      <button
+                        onClick={handleExtendSession}
+                        className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                      >
+                        Prolonger la session
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -144,10 +211,13 @@ const Header: React.FC = () => {
       </div>
       
       {/* Overlay to close notifications when clicking outside */}
-      {showNotifications && (
+      {(showNotifications || showSessionInfo) && (
         <div 
           className="fixed inset-0 z-40" 
-          onClick={() => setShowNotifications(false)}
+          onClick={() => {
+            setShowNotifications(false);
+            setShowSessionInfo(false);
+          }}
         ></div>
       )}
     </header>

@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { userService } from '../services/database';
 import { logger } from '../utils/logger';
-import { supabase } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -77,6 +76,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     logger.info('User logged out', { username: user?.username });
     localStorage.removeItem('currentUser');
+    
+    // Clear any session timers or data
+    sessionStorage.clear();
+    
     setUser(null);
   };
 

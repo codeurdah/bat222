@@ -1,6 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useSessionTimeout } from './hooks/useSessionTimeout';
 import ErrorBoundary from './components/Common/ErrorBoundary';
 import MaintenanceMode from './components/Common/MaintenanceMode';
 import { config } from './config/environment';
@@ -23,6 +24,12 @@ import TransferValidation from './components/Admin/TransferValidation';
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Initialize session timeout (5 minutes)
+  useSessionTimeout({
+    timeoutMinutes: 5,
+    warningMinutes: 1
+  });
 
   // Check for maintenance mode
   if (config.features.maintenanceMode) {
