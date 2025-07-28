@@ -26,6 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'clients', label: 'Gestion Clients', icon: Users },
     { id: 'portfolio', label: 'Portefeuilles', icon: PieChart },
     { id: 'loan-validation', label: 'Validation Crédits', icon: CheckCircle },
+    { id: 'transfer-validation', label: 'Validation Virements', icon: ArrowLeftRight },
     { id: 'calculator', label: 'Calculateurs', icon: Calculator },
   ];
 

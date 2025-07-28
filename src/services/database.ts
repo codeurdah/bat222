@@ -363,6 +363,63 @@ export const transactionService = {
       logger.error('Error creating transaction', error as Error);
       throw error;
     }
+  },
+
+  async updateStatus(id: string, status: 'pending' | 'completed' | 'failed'): Promise<Transaction> {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({ status })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return {
+        id: data.id,
+        fromAccountId: data.from_account_id,
+        toAccountId: data.to_account_id,
+        amount: parseFloat(data.amount),
+        currency: data.currency,
+        type: data.type,
+        description: data.description,
+        status: data.status,
+        createdAt: data.created_at
+      };
+    } catch (error) {
+      logger.error('Error updating transaction status', error as Error);
+      throw error;
+    }
+  },
+
+  async updateStatusWithReason(id: string, status: 'failed', reason: string): Promise<Transaction> {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .update({ 
+          status,
+          description: `${data?.description || ''} - REJETÉ: ${reason}`
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return {
+        id: data.id,
+        fromAccountId: data.from_account_id,
+        toAccountId: data.to_account_id,
+        amount: parseFloat(data.amount),
+        currency: data.currency,
+        type: data.type,
+        description: data.description,
+        status: data.status,
+        createdAt: data.created_at
+      };
+    } catch (error) {
+      logger.error('Error updating transaction status with reason', error as Error);
+      throw error;
+    }
   }
 };
 

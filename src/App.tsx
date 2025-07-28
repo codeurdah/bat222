@@ -18,6 +18,7 @@ import ClientProfile from './components/Client/ClientProfile';
 import ClientManagement from './components/Admin/ClientManagement';
 import PortfolioManagement from './components/Admin/PortfolioManagement';
 import LoanValidation from './components/Admin/LoanValidation';
+import TransferValidation from './components/Admin/TransferValidation';
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -52,6 +53,8 @@ const AppContent: React.FC = () => {
         return user?.role === 'admin' ? <PortfolioManagement /> : <ClientDashboard />;
       case 'loan-validation':
         return user?.role === 'admin' ? <LoanValidation /> : <ClientDashboard />;
+      case 'transfer-validation':
+        return user?.role === 'admin' ? <TransferValidation /> : <ClientDashboard />;
       case 'calculator':
         return <LoanCalculator />;
       default:
