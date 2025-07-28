@@ -34,6 +34,7 @@ const ClientManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<User | null>(null);
   const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
   const [newClient, setNewClient] = useState({
     firstName: '',
     lastName: '',
@@ -105,13 +106,33 @@ const ClientManagement: React.FC = () => {
     disableSessionTimer(10000); // 10 secondes
     
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) {
-      // In a real app, this would make an API call
-      console.log('Deleting client:', clientId);
+      setProcessingId(clientId);
       
-      // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
-      setTimeout(() => {
-        alert('✅ Client supprimé avec succès !');
-      }, 100);
+      try {
+        // Supprimer le client de la base de données
+        userService.delete(clientId)
+          .then(() => {
+            // Rafraîchir les données
+            refetchUsers();
+            refetchAccounts();
+            
+            // Utiliser setTimeout pour éviter que l'alert interfère avec le timer de session
+            setTimeout(() => {
+              alert('✅ Client supprimé avec succès !');
+            }, 100);
+          })
+          .catch((error) => {
+            console.error('Erreur lors de la suppression:', error);
+            alert('❌ Erreur lors de la suppression. Veuillez réessayer.');
+          })
+          .finally(() => {
+            setProcessingId(null);
+          });
+      } catch (error) {
+        console.error('Erreur lors de la suppression:', error);
+        alert('❌ Erreur lors de la suppression. Veuillez réessayer.');
+        setProcessingId(null);
+      }
     }
   };
 
@@ -465,10 +486,15 @@ const ClientManagement: React.FC = () => {
                         </button>
                         <button 
                           onClick={() => handleDeleteClient(client.id)}
-                          className="p-1 text-red-600 hover:text-red-800" 
+                          disabled={processingId === client.id}
+                          className="p-1 text-red-600 hover:text-red-800 disabled:opacity-50 disabled:cursor-not-allowed" 
                           title="Supprimer"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          {processingId === client.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
                     </td>

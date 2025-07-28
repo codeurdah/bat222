@@ -191,6 +191,48 @@ export const userService = {
       logger.error('Error updating user', error as Error);
       throw error;
     }
+  },
+
+  async delete(id: string): Promise<void> {
+    try {
+      console.log('🗑️ Suppression du client:', id);
+      
+      // Essayer d'abord avec une fonction RPC qui contourne RLS
+      try {
+        const { error: rpcError } = await supabase.rpc('delete_user_admin', {
+          p_user_id: id
+        });
+        
+        if (rpcError && rpcError.code !== '42883') {
+          throw rpcError;
+        }
+        
+        if (!rpcError) {
+          console.log('✅ Client supprimé via RPC');
+          return;
+        } else {
+          throw new Error('RPC function not available');
+        }
+      } catch (rpcErr) {
+        console.log('🔄 RPC non disponible, utilisation de la méthode directe...');
+        
+        // Fallback vers suppression directe
+        const { error: deleteError } = await supabase
+          .from('users')
+          .delete()
+          .eq('id', id);
+        
+        if (deleteError) {
+          console.error('❌ Erreur Supabase lors de la suppression:', deleteError);
+          throw deleteError;
+        }
+      }
+      
+      console.log('✅ Client supprimé avec succès');
+    } catch (error) {
+      logger.error('Error deleting user', error as Error);
+      throw error;
+    }
   }
 };
 
