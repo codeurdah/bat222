@@ -6,12 +6,17 @@ import { logger } from '../utils/logger';
 export const userService = {
   async getAll(): Promise<User[]> {
     try {
+      console.log('🔍 Tentative de récupération de tous les utilisateurs...');
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur Supabase lors de la récupération des utilisateurs:', error);
+        throw error;
+      }
+      console.log('✅ Utilisateurs récupérés avec succès:', data?.length || 0);
       return data || [];
     } catch (error) {
       logger.error('Error fetching users', error as Error);
@@ -53,6 +58,12 @@ export const userService = {
 
   async create(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
+      console.log('🔍 Tentative de création d\'utilisateur:', {
+        username: user.username,
+        email: user.email,
+        role: user.role
+      });
+      
       const { data, error } = await supabase
         .from('users')
         .insert([{
@@ -68,7 +79,15 @@ export const userService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erreur Supabase lors de la création d\'utilisateur:', error);
+        console.error('Code d\'erreur:', error.code);
+        console.error('Message:', error.message);
+        console.error('Détails:', error.details);
+        throw error;
+      }
+      
+      console.log('✅ Utilisateur créé avec succès:', data);
       return {
         id: data.id,
         username: data.username,

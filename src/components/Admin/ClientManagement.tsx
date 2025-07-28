@@ -113,11 +113,19 @@ const ClientManagement: React.FC = () => {
     try {
       // Validation des champs requis
       if (!newClient.firstName || !newClient.lastName || !newClient.email || !newClient.username || !newClient.password) {
-        alert('❌ Veuillez remplir tous les champs obligatoires');
+        const missingFields = [];
+        if (!newClient.firstName) missingFields.push('Prénom');
+        if (!newClient.lastName) missingFields.push('Nom');
+        if (!newClient.email) missingFields.push('Email');
+        if (!newClient.username) missingFields.push('Nom d\'utilisateur');
+        if (!newClient.password) missingFields.push('Mot de passe');
+        
+        alert(`❌ Champs obligatoires manquants :\n${missingFields.join(', ')}`);
         setIsCreatingClient(false);
         return;
       }
 
+      console.log('🚀 Début de la création du client...');
       console.log('Création du client avec les données:', {
         username: newClient.username,
         firstName: newClient.firstName,
@@ -195,9 +203,19 @@ const ClientManagement: React.FC = () => {
         errorMessage = error;
       } else if (error && typeof error === 'object' && 'message' in error) {
         errorMessage = (error as any).message;
+      } else if (error && typeof error === 'object' && 'code' in error) {
+        const supabaseError = error as any;
+        errorMessage = `Code: ${supabaseError.code}\nMessage: ${supabaseError.message}\nDétails: ${supabaseError.details || 'Aucun détail'}`;
       }
       
-      alert(`❌ Erreur lors de la création du client:\n\n${errorMessage}\n\nVeuillez vérifier la console pour plus de détails.`);
+      // Messages d'erreur spécifiques selon le type d'erreur
+      if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
+        alert(`❌ Erreur d'autorisation (403)\n\nProblème possible :\n• Variables d'environnement Supabase manquantes\n• Politiques de sécurité trop restrictives\n• Clé API incorrecte\n\nVérifiez la console pour plus de détails.`);
+      } else if (errorMessage.includes('duplicate') || errorMessage.includes('unique')) {
+        alert(`❌ Conflit de données\n\nUn utilisateur avec ce nom d'utilisateur ou cet email existe déjà.\n\nVeuillez choisir des valeurs différentes.`);
+      } else {
+        alert(`❌ Erreur lors de la création du client:\n\n${errorMessage}\n\nVeuillez vérifier la console pour plus de détails.`);
+      }
     } finally {
       setIsCreatingClient(false);
     }
