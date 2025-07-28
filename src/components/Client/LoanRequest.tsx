@@ -61,8 +61,68 @@ const LoanRequest: React.FC = () => {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Créer la demande de crédit dans la base de données
+      const newApplication = await loanApplicationService.create({
+        userId: user!.id,
+        loanType: formData.loanType,
+        amount: formData.amount,
+        currency: formData.currency,
+        duration: formData.duration,
+        interestRate: currentLoanType.rate,
+        purpose: formData.purpose,
+        monthlyIncome: formData.monthlyIncome,
+        status: 'pending'
+      });
+
+      console.log('✅ Demande de crédit créée:', newApplication);
+
+      alert(`🎉 Demande de crédit soumise avec succès !
+
+Détails de votre demande :
+• Référence : ${newApplication.id}
+• Type : ${currentLoanType.label}
+• Montant : ${formatCurrency(formData.amount, formData.currency)}
+• Durée : ${formData.duration} mois
+• Mensualité estimée : ${formatCurrency(monthlyPayment, formData.currency)}
+
+Votre demande sera examinée dans les 48h ouvrables.
+Vous recevrez une notification par email dès qu'une décision sera prise.`);
+      
+      // Reset form
+      setCurrentStep(1);
+      setFormData({
+        loanType: 'personal',
+        amount: 10000,
+        currency: 'EUR',
+        duration: 24,
+        purpose: '',
+        monthlyIncome: 0,
+        employmentStatus: 'employed',
+        employerName: '',
+        workExperience: 0,
+        documents: {
+          incomeProof: null,
+          identityDocument: null,
+          residenceProof: null,
+          businessPlan: null
+        }
+      });
+      
+    } catch (error) {
+      console.error('❌ Erreur lors de la création de la demande:', error);
+      alert('❌ Erreur lors de la soumission de la demande. Veuillez réessayer.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSubmitOld = async () => {
+    setIsSubmitting(true);
+    
+    // Old simulation code - keeping as backup
+    setTimeout(() => {</parameter>
+
       alert(`🎉 Demande de crédit soumise avec succès !
 
 Détails de votre demande :
