@@ -111,6 +111,20 @@ const ClientManagement: React.FC = () => {
     setIsCreatingClient(true);
     
     try {
+      // Validation des champs requis
+      if (!newClient.firstName || !newClient.lastName || !newClient.email || !newClient.username || !newClient.password) {
+        alert('❌ Veuillez remplir tous les champs obligatoires');
+        setIsCreatingClient(false);
+        return;
+      }
+
+      console.log('Création du client avec les données:', {
+        username: newClient.username,
+        firstName: newClient.firstName,
+        lastName: newClient.lastName,
+        email: newClient.email
+      });
+
       // Créer l'utilisateur dans la base de données
       const newUser = await userService.create({
         username: newClient.username,
@@ -123,9 +137,13 @@ const ClientManagement: React.FC = () => {
         address: newClient.address
       });
       
+      console.log('Utilisateur créé avec succès:', newUser);
+
       // Générer un numéro de compte unique
       const accountNumber = `TG53TG138010${Date.now().toString().slice(-8)}${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
+      console.log('Création du compte avec le numéro:', accountNumber);
+
       // Créer le compte bancaire initial
       await accountService.create({
         userId: newUser.id,
@@ -136,10 +154,14 @@ const ClientManagement: React.FC = () => {
         status: 'active'
       });
       
+      console.log('Compte créé avec succès');
+
       // Rafraîchir les données
       await refetchUsers();
       await refetchAccounts();
       
+      console.log('Données rafraîchies');
+
       // Envoyer l'email de bienvenue
       sendWelcomeEmail(newClient);
       
@@ -163,8 +185,19 @@ const ClientManagement: React.FC = () => {
       });
       
     } catch (error) {
-      console.error('Erreur lors de la création du client:', error);
-      alert('❌ Erreur lors de la création du client. Veuillez réessayer.');
+      console.error('Erreur détaillée lors de la création du client:', error);
+      
+      // Afficher l'erreur spécifique pour le débogage
+      let errorMessage = 'Erreur inconnue';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = (error as any).message;
+      }
+      
+      alert(`❌ Erreur lors de la création du client:\n\n${errorMessage}\n\nVeuillez vérifier la console pour plus de détails.`);
     } finally {
       setIsCreatingClient(false);
     }
