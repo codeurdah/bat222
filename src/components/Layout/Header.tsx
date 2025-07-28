@@ -1,0 +1,177 @@
+import React from 'react';
+import { LogOut, User, Bell, X } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+const Header: React.FC = () => {
+  const { user, logout } = useAuth();
+  const [showNotifications, setShowNotifications] = React.useState(false);
+
+  const notifications = [
+    {
+      id: 1,
+      title: 'Nouvelle demande de crédit',
+      message: 'Jean Dupont a soumis une demande de crédit personnel',
+      time: '5 min',
+      type: 'info',
+      unread: true
+    },
+    {
+      id: 2,
+      title: 'Paiement en retard',
+      message: 'Marie Martin a un paiement en retard de 3 jours',
+      time: '1h',
+      type: 'warning',
+      unread: true
+    },
+    {
+      id: 3,
+      title: 'Nouveau client enregistré',
+      message: 'Pierre Dubois s\'est inscrit avec succès',
+      time: '2h',
+      type: 'success',
+      unread: false
+    },
+    {
+      id: 4,
+      title: 'Limite de crédit atteinte',
+      message: 'Le portefeuille a atteint 85% de sa limite',
+      time: '3h',
+      type: 'error',
+      unread: false
+    }
+  ];
+
+  const unreadCount = notifications.filter(n => n.unread).length;
+
+  const getNotificationColor = (type: string) => {
+    switch (type) {
+      case 'info': return 'border-l-blue-500 bg-blue-50';
+      case 'warning': return 'border-l-yellow-500 bg-yellow-50';
+      case 'success': return 'border-l-green-500 bg-green-50';
+      case 'error': return 'border-l-red-500 bg-red-50';
+      default: return 'border-l-gray-500 bg-gray-50';
+    }
+  };
+
+  return (
+    <header className="bg-white shadow-sm border-b border-gray-200 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <img 
+              src="/BACI-Logo-slogan.png" 
+              alt="Banque Atlantique" 
+              className="h-10 w-auto"
+            />
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <button 
+                onClick={() => setShowNotifications(!showNotifications)}
+                className="p-2 text-gray-400 hover:text-gray-500 relative"
+              >
+              <Bell className="h-6 w-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 block h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-medium">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notifications Dropdown */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className="text-gray-400 hover:text-gray-600"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                    {unreadCount > 0 && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        {unreadCount} nouvelle(s) notification(s)
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 border-l-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${getNotificationColor(notification.type)} ${
+                          notification.unread ? 'bg-opacity-100' : 'bg-opacity-50'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h4 className={`text-sm font-medium ${
+                              notification.unread ? 'text-gray-900' : 'text-gray-700'
+                            }`}>
+                              {notification.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {notification.message}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">
+                              {notification.time}
+                            </span>
+                            {notification.unread && (
+                              <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="p-4 border-t border-gray-200">
+                    <button className="w-full text-center text-sm text-orange-600 hover:text-orange-700 font-medium">
+                      Voir toutes les notifications
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-gray-400" />
+                <span className="text-sm font-medium text-gray-700">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                  {user?.role === 'admin' ? 'Administrateur' : 'Client'}
+                </span>
+              </div>
+              
+              <button
+                onClick={logout}
+                className="flex items-center space-x-1 text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Déconnexion</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Overlay to close notifications when clicking outside */}
+      {showNotifications && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setShowNotifications(false)}
+        ></div>
+      )}
+    </header>
+  );
+};
+
+export default Header;
