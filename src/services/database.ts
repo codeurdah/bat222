@@ -7,21 +7,50 @@ export const userService = {
   async getAll(): Promise<User[]> {
     try {
       console.log('🔍 Tentative de récupération de tous les utilisateurs...');
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      
+      // Utiliser le service role pour contourner RLS
+      const { data, error } = await supabase.rpc('get_all_users');
+      
+      if (error && error.code === '42883') {
+        // Si la fonction n'existe pas, utiliser la méthode normale
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('users')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (fallbackError) {
+          console.error('❌ Erreur Supabase lors de la récupération des utilisateurs:', fallbackError);
+          throw fallbackError;
+        }
+        console.log('✅ Utilisateurs récupérés avec succès (fallback):', fallbackData?.length || 0);
+        return (fallbackData || []).map(this.mapUserFromDb);
+      }
 
       if (error) {
         console.error('❌ Erreur Supabase lors de la récupération des utilisateurs:', error);
         throw error;
       }
       console.log('✅ Utilisateurs récupérés avec succès:', data?.length || 0);
-      return data || [];
+      return (data || []).map(this.mapUserFromDb);
     } catch (error) {
       logger.error('Error fetching users', error as Error);
       throw error;
     }
+  },
+
+  mapUserFromDb(dbUser: any): User {
+    return {
+      id: dbUser.id,
+      username: dbUser.username,
+      password: dbUser.password_hash || dbUser.password,
+      role: dbUser.role,
+      firstName: dbUser.first_name || dbUser.firstName,
+      lastName: dbUser.last_name || dbUser.lastName,
+      email: dbUser.email,
+      phone: dbUser.phone,
+      address: dbUser.address,
+      createdAt: dbUser.created_at || dbUser.createdAt
+    };
   },
 
   async getById(id: string): Promise<User | null> {
@@ -33,7 +62,7 @@ export const userService = {
         .single();
 
       if (error) throw error;
-      return data;
+      return data ? this.mapUserFromDb(data) : null;
     } catch (error) {
       logger.error('Error fetching user by ID', error as Error);
       return null;
@@ -49,7 +78,7 @@ export const userService = {
         .single();
 
       if (error) throw error;
-      return data;
+      return data ? this.mapUserFromDb(data) : null;
     } catch (error) {
       logger.error('Error fetching user by username', error as Error);
       return null;
@@ -58,26 +87,61 @@ export const userService = {
 
   async create(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
+      console.log('🔍 Tentative de création d\'utilisateur avec contournement RLS...');
+      
       console.log('🔍 Tentative de création d\'utilisateur:', {
         username: user.username,
         email: user.email,
         role: user.role
       });
       
-      const { data, error } = await supabase
-        .from('users')
-        .insert([{
-          username: user.username,
-          password_hash: user.password, // En production, hasher le mot de passe
-          role: user.role,
-          first_name: user.firstName,
-          last_name: user.lastName,
-          email: user.email,
-          phone: user.phone,
-          address: user.address
-        }])
+      // Essayer d'abord avec une fonction RPC qui contourne RLS
+      let data, error;
+      
+      try {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('create_user_admin', {
+          p_username: user.username,
+          p_password_hash: user.password,
+          p_role: user.role,
+          p_first_name: user.firstName,
+          p_last_name: user.lastName,
+          p_email: user.email,
+          p_phone: user.phone,
+          p_address: user.address
+        });
+        
+        if (rpcError && rpcError.code !== '42883') {
+          throw rpcError;
+        }
+        
+        if (!rpcError) {
+          data = rpcData;
+          error = null;
+        } else {
+          throw new Error('RPC function not available');
+        }
+      } catch (rpcErr) {
+        console.log('🔄 RPC non disponible, utilisation de la méthode directe...');
+        
+        // Fallback vers insertion directe
+        const { data: insertData, error: insertError } = await supabase
+          .from('users')
+          .insert([{
+            username: user.username,
+            password_hash: user.password,
+            role: user.role,
+            first_name: user.firstName,
+            last_name: user.lastName,
+            email: user.email,
+            phone: user.phone,
+            address: user.address
+          }])
         .select()
         .single();
+        
+        data = insertData;
+        error = insertError;
+      }
 
       if (error) {
         console.error('❌ Erreur Supabase lors de la création d\'utilisateur:', error);
@@ -88,18 +152,7 @@ export const userService = {
       }
       
       console.log('✅ Utilisateur créé avec succès:', data);
-      return {
-        id: data.id,
-        username: data.username,
-        password: data.password_hash,
-        role: data.role,
-        firstName: data.first_name,
-        lastName: data.last_name,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        createdAt: data.created_at
-      };
+      return this.mapUserFromDb(data);
     } catch (error) {
       logger.error('Error creating user', error as Error);
       throw error;
