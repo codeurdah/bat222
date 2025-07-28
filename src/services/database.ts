@@ -59,7 +59,7 @@ export const userService = {
         .from('users')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data ? this.mapUserFromDb(data) : null;

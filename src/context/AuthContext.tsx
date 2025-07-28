@@ -26,21 +26,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const loadUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        // Fetch user profile from public.users table using the Supabase Auth user ID
+      // Pour la démo, vérifier s'il y a un utilisateur stocké localement
+      const storedUser = localStorage.getItem('currentUser');
+      if (storedUser) {
         try {
-          const fetchedUser = await userService.getById(session.user.id);
-          if (fetchedUser) {
-            setUser(fetchedUser);
-            logger.info('User session restored', { userId: session.user.id, email: session.user.email });
-          } else {
-            logger.warn('User profile not found in public.users for session ID', { userId: session.user.id });
-            await supabase.auth.signOut(); // Sign out if profile not found
-          }
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          logger.info('User session restored from localStorage', { userId: parsedUser.id });
         } catch (error) {
-          logger.error('Error fetching user profile from public.users', error as Error);
-          await supabase.auth.signOut();
+          localStorage.removeItem('currentUser');
+          setUser(null);
         }
       } else {
         setUser(null);
@@ -48,60 +43,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     loadUser();
-
-    // Listen for auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        // Fetch user profile from public.users table
-        userService.getById(session.user.id)
-          .then(fetchedUser => {
-            if (fetchedUser) {
-              setUser(fetchedUser);
-              logger.info('Auth state changed: User logged in', { userId: session.user.id, email: session.user.email });
-            } else {
-              logger.warn('Auth state changed: User profile not found in public.users', { userId: session.user.id });
-              supabase.auth.signOut();
-            }
-          })
-          .catch(error => {
-            logger.error('Auth state changed: Error fetching user profile', error as Error);
-            supabase.auth.signOut();
-          });
-      } else {
-        setUser(null);
-        logger.info('Auth state changed: User logged out');
-      }
-    });
-
-    return () => {
-      authListener?.subscription?.unsubscribe();
-    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Pour la démo, utiliser l'authentification basique avec la table users
+      // Au lieu de l'authentification Supabase Auth
+      const { data: users, error } = await supabase
+        .from('users')
+        .select('*')
+        .or(`email.eq.${email},username.eq.${email}`)
+        .eq('password_hash', password)
+        .maybeSingle();
 
       if (error) {
-        logger.error('Supabase login error', error);
+        logger.error('Login error', error);
         return false;
       }
 
-      if (data.user) {
-        // Fetch user profile from public.users table using the Supabase Auth user ID
-        const fetchedUser = await userService.getById(data.user.id);
-        if (fetchedUser) {
-          setUser(fetchedUser);
-          logger.info('User logged in via Supabase Auth', { userId: data.user.id, email: data.user.email });
-          return true;
-        } else {
-          logger.warn('User profile not found in public.users after Supabase Auth login', { userId: data.user.id });
-          await supabase.auth.signOut(); // Sign out if profile not found in public.users
-          return false;
-        }
+      if (users) {
+        const fetchedUser = userService.mapUserFromDb(users);
+        setUser(fetchedUser);
+        logger.info('User logged in', { userId: users.id, email: users.email });
+        return true;
       }
       return false;
     } catch (error) {
