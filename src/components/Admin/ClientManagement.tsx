@@ -28,23 +28,6 @@ const ClientManagement: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'suspended'>('all');
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
   const [showModal, setShowModal] = useState(false);
-  if (usersLoading || accountsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-        <span className="ml-2 text-gray-600">Chargement des données...</span>
-      </div>
-    );
-  }
-
-  if (usersError || accountsError) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Erreur lors du chargement des données: {usersError || accountsError}</p>
-      </div>
-    );
-  }
-
   const [showNewClientModal, setShowNewClientModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingClient, setEditingClient] = useState<User | null>(null);
@@ -62,6 +45,23 @@ const ClientManagement: React.FC = () => {
     identityDocument: null as File | null,
     residenceProof: null as File | null
   });
+
+  if (usersLoading || accountsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement des données...</span>
+      </div>
+    );
+  }
+
+  if (usersError || accountsError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {usersError || accountsError}</p>
+      </div>
+    );
+  }
 
   const clients = mockUsers.filter(user => user.role === 'client');
   
