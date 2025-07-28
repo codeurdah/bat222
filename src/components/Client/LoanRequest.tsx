@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { calculateMonthlyPayment, formatCurrency } from '../../utils/calculations';
+import { loanApplicationService } from '../../services/database';
 
 const LoanRequest: React.FC = () => {
   const { user } = useAuth();
@@ -62,6 +63,25 @@ const LoanRequest: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Validation des champs obligatoires
+      if (!formData.purpose.trim()) {
+        alert('❌ Veuillez décrire l\'objet du crédit');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (formData.monthlyIncome <= 0) {
+        alert('❌ Veuillez indiquer vos revenus mensuels');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!formData.documents.incomeProof || !formData.documents.identityDocument || !formData.documents.residenceProof) {
+        alert('❌ Veuillez joindre tous les documents obligatoires');
+        setIsSubmitting(false);
+        return;
+      }
+
       // Créer la demande de crédit dans la base de données
       const newApplication = await loanApplicationService.create({
         userId: user!.id,
@@ -111,7 +131,20 @@ Vous recevrez une notification par email dès qu'une décision sera prise.`);
       
     } catch (error) {
       console.error('❌ Erreur lors de la création de la demande:', error);
-      alert('❌ Erreur lors de la soumission de la demande. Veuillez réessayer.');
+      
+      // Messages d'erreur spécifiques
+      let errorMessage = 'Erreur inconnue';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      if (errorMessage.includes('duplicate') || errorMessage.includes('unique')) {
+        alert('❌ Une demande similaire existe déjà. Veuillez attendre le traitement de votre demande précédente.');
+      } else if (errorMessage.includes('403') || errorMessage.includes('unauthorized')) {
+        alert('❌ Erreur d\'autorisation. Veuillez vous reconnecter et réessayer.');
+      } else {
+        alert(`❌ Erreur lors de la soumission de la demande:\n\n${errorMessage}\n\nVeuillez réessayer ou contacter le support.`);
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -13,11 +13,14 @@ import {
   Filter,
   Search
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { useLoanApplications, useUsers } from '../../hooks/useData';
+import { loanApplicationService } from '../../services/database';
 import { LoanApplication, User as UserType } from '../../types';
 import { formatCurrency, calculateMonthlyPayment } from '../../utils/calculations';
 
 const LoanValidation: React.FC = () => {
+  const { user } = useAuth();
   const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
   const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
@@ -90,15 +93,23 @@ const LoanValidation: React.FC = () => {
 
   const handleApprove = (applicationId: string) => {
     if (window.confirm('Êtes-vous sûr de vouloir approuver cette demande de crédit ?')) {
-      // In a real app, this would make an API call
-      console.log('Approving application:', applicationId);
-      
-      // Simulate API call and update
-      setTimeout(() => {
-        alert('Demande de crédit approuvée avec succès !\n\nLe client sera notifié par email et le prêt sera activé dans son compte.');
-        // In a real app, this would update the state and refresh the data
-        window.location.reload();
-      }, 1000);
+      try {
+        // Mettre à jour le statut dans la base de données
+        loanApplicationService.updateStatus(applicationId, 'approved', user?.id || 'admin')
+          .then(() => {
+            alert('✅ Demande de crédit approuvée avec succès !\n\nLe client sera notifié par email et le prêt sera activé dans son compte.');
+            
+            // Rafraîchir les données
+            window.location.reload();
+          })
+          .catch((error) => {
+            console.error('Erreur lors de l\'approbation:', error);
+            alert('❌ Erreur lors de l\'approbation. Veuillez réessayer.');
+          });
+      } catch (error) {
+        console.error('Erreur lors de l\'approbation:', error);
+        alert('❌ Erreur lors de l\'approbation. Veuillez réessayer.');
+      }
     }
   };
 
@@ -106,16 +117,26 @@ const LoanValidation: React.FC = () => {
     const reason = prompt('Veuillez indiquer la raison du rejet (optionnel) :');
     
     if (window.confirm('Êtes-vous sûr de vouloir rejeter cette demande de crédit ?')) {
-      // In a real app, this would make an API call
-      console.log('Rejecting application:', applicationId, 'Reason:', reason);
-      
-      // Simulate API call and update
-      setTimeout(() => {
-        alert('Demande de crédit rejetée.\n\nLe client sera notifié par email avec les raisons du refus.');
-        // In a real app, this would update the state and refresh the data
-        window.location.reload();
-      }, 1000);
+      try {
+        // Mettre à jour le statut dans la base de données
+        loanApplicationService.updateStatus(applicationId, 'rejected', user?.id || 'admin')
+          .then(() => {
+            alert('✅ Demande de crédit rejetée.\n\nLe client sera notifié par email avec les raisons du refus.');
+            
+            // Rafraîchir les données
+            window.location.reload();
+          })
+          .catch((error) => {
+            console.error('Erreur lors du rejet:', error);
+            alert('❌ Erreur lors du rejet. Veuillez réessayer.');
+          });
+      } catch (error) {
+        console.error('Erreur lors du rejet:', error);
+        alert('❌ Erreur lors du rejet. Veuillez réessayer.');
+      }
     }
+  };
+      
   };
 
   const handleDownload = (applicationId: string) => {
