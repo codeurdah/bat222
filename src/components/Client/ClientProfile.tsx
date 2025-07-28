@@ -29,23 +29,6 @@ const ClientProfile: React.FC = () => {
   const [showRIB, setShowRIB] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  if (accountsLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
-        <span className="ml-2 text-gray-600">Chargement du profil...</span>
-      </div>
-    );
-  }
-
-  if (accountsError) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Erreur lors du chargement des données: {accountsError}</p>
-      </div>
-    );
-  }
-
   const [editData, setEditData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
