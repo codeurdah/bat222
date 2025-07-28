@@ -12,12 +12,32 @@ import {
   Target,
   Activity
 } from 'lucide-react';
-import { mockAccounts, mockLoans, mockUsers } from '../../data/mockData';
+import { useAccounts, useLoans, useUsers } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const PortfolioManagement: React.FC = () => {
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { loans: mockLoans, loading: loansLoading, error: loansError } = useLoans();
+  const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedPeriod, setSelectedPeriod] = useState<'1M' | '3M' | '6M' | '1Y'>('3M');
   const [selectedView, setSelectedView] = useState<'overview' | 'risk' | 'performance'>('overview');
+
+  if (accountsLoading || loansLoading || usersLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement du portefeuille...</span>
+      </div>
+    );
+  }
+
+  if (accountsError || loansError || usersError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {accountsError || loansError || usersError}</p>
+      </div>
+    );
+  }
 
   // Portfolio calculations
   const totalAssets = mockAccounts.reduce((sum, acc) => sum + acc.balance, 0);

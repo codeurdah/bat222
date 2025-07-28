@@ -9,10 +9,32 @@ import {
   Activity,
   CheckCircle
 } from 'lucide-react';
-import { mockUsers, mockAccounts, mockTransactions, mockLoanApplications } from '../../data/mockData';
+import { useUsers, useAccounts, useTransactions, useLoanApplications } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const AdminDashboard: React.FC = () => {
+  const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
+
+  if (usersLoading || accountsLoading || transactionsLoading || applicationsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement du tableau de bord...</span>
+      </div>
+    );
+  }
+
+  if (usersError || accountsError || transactionsError || applicationsError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {usersError || accountsError || transactionsError || applicationsError}</p>
+      </div>
+    );
+  }
+
   const totalClients = mockUsers.filter(u => u.role === 'client').length;
   const totalAccounts = mockAccounts.length;
   const totalDeposits = mockAccounts.reduce((sum, acc) => sum + acc.balance, 0);

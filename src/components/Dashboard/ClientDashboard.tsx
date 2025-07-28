@@ -10,11 +10,31 @@ import {
   Calendar
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { mockAccounts, mockTransactions, mockLoans } from '../../data/mockData';
+import { useAccounts, useTransactions, useLoans } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const ClientDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
+  const { loans: mockLoans, loading: loansLoading, error: loansError } = useLoans();
+
+  if (accountsLoading || transactionsLoading || loansLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement de votre tableau de bord...</span>
+      </div>
+    );
+  }
+
+  if (accountsError || transactionsError || loansError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {accountsError || transactionsError || loansError}</p>
+      </div>
+    );
+  }
   
   const userAccounts = mockAccounts.filter(acc => acc.userId === user?.id);
   const userTransactions = mockTransactions.filter(

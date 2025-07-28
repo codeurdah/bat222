@@ -13,15 +13,34 @@ import {
   Filter,
   Search
 } from 'lucide-react';
-import { mockLoanApplications, mockUsers } from '../../data/mockData';
+import { useLoanApplications, useUsers } from '../../hooks/useData';
 import { LoanApplication, User as UserType } from '../../types';
 import { formatCurrency, calculateMonthlyPayment } from '../../utils/calculations';
 
 const LoanValidation: React.FC = () => {
+  const { applications: mockLoanApplications, loading: applicationsLoading, error: applicationsError } = useLoanApplications();
+  const { users: mockUsers, loading: usersLoading, error: usersError } = useUsers();
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedApplication, setSelectedApplication] = useState<LoanApplication | null>(null);
   const [showModal, setShowModal] = useState(false);
+
+  if (applicationsLoading || usersLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement des données...</span>
+      </div>
+    );
+  }
+
+  if (applicationsError || usersError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {applicationsError || usersError}</p>
+      </div>
+    );
+  }
 
   const filteredApplications = mockLoanApplications.filter(app => {
     const matchesSearch = searchTerm === '' || 

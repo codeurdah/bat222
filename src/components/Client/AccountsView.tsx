@@ -14,14 +14,33 @@ import {
   Activity
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { mockAccounts, mockTransactions } from '../../data/mockData';
+import { useAccounts, useTransactions } from '../../hooks/useData';
 import { formatCurrency } from '../../utils/calculations';
 
 const AccountsView: React.FC = () => {
   const { user } = useAuth();
+  const { accounts: mockAccounts, loading: accountsLoading, error: accountsError } = useAccounts();
+  const { transactions: mockTransactions, loading: transactionsLoading, error: transactionsError } = useTransactions();
   const [showBalances, setShowBalances] = useState(true);
   const [selectedAccount, setSelectedAccount] = useState<string>('all');
   const [selectedPeriod, setSelectedPeriod] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+
+  if (accountsLoading || transactionsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        <span className="ml-2 text-gray-600">Chargement des données...</span>
+      </div>
+    );
+  }
+
+  if (accountsError || transactionsError) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-800">Erreur lors du chargement des données: {accountsError || transactionsError}</p>
+      </div>
+    );
+  }
 
   const userAccounts = mockAccounts.filter(acc => acc.userId === user?.id);
   const totalBalance = userAccounts.reduce((sum, acc) => sum + acc.balance, 0);
