@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const LoginForm: React.FC = () => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -16,9 +16,9 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
     
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
       if (!success) {
-        setError('Nom d\'utilisateur ou mot de passe incorrect');
+        setError('Email ou mot de passe incorrect');
       }
     } catch (error) {
       setError('Erreur de connexion. Veuillez réessayer.');
@@ -47,21 +47,21 @@ const LoginForm: React.FC = () => {
         <div className="bg-white rounded-xl shadow-lg p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Nom d'utilisateur
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
+                  <Mail className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  id="username"
-                  type="text"
+                  id="email"
+                  type="email"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Entrez votre nom d'utilisateur"
+                  placeholder="Entrez votre email"
                 />
               </div>
             </div>
