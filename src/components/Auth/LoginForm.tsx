@@ -149,64 +149,24 @@ const LoginForm: React.FC = () => {
             </button>
           </form>
 
-          {config.app.environment === 'development' && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-4">
-                  Vous n'avez pas encore de compte ?
-                </p>
-                <button
-                  onClick={() => {
-                    alert('🏦 Demande d\'inscription\n\nPour ouvrir un compte à la Banque Atlantique :\n\n1. Rendez-vous dans une de nos agences\n2. Munissez-vous de vos pièces justificatives :\n   • CNI ou Passeport\n   • Justificatif de revenus\n   • Justificatif de domicile\n\n3. Un conseiller vous accompagnera dans la création de votre compte\n\nAgences :\n📍 Lomé Centre - Rue du Commerce\n📍 Lomé Bè - Avenue de la Paix\n📍 Kara - Boulevard Central\n\n📞 Hotline : +228 XX XX XX XX\n📧 contact@banqueatlantique.tg');
-                  }}
-                  className="w-full flex justify-center items-center space-x-2 py-3 px-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors font-medium"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                  </svg>
-                  <span>Demande d'Inscription</span>
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {config.app.environment === 'development' && (
-            <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">🧪 Mode Développement - Comptes de test</h4>
-                <div className="space-y-2 text-xs text-blue-800">
-                  <div><strong>Admin:</strong> admin / admin1237575@@xyz</div>
-                  <div><strong>Client 1:</strong> client1 / client123</div>
-                  <div><strong>Client 2:</strong> client2 / client123</div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {/* Comptes de test toujours visibles pour la démo */}
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-green-900 mb-2">🔑 Comptes de démonstration</h4>
-              <div className="space-y-2 text-xs text-green-800">
-                <div><strong>Administrateur:</strong> admin / admin1237575@@xyz</div>
-                <div><strong>Client 1:</strong> client1 / client123</div>
-                <div><strong>Client 2:</strong> client2 / client123</div>
-              </div>
-              <p className="text-xs text-green-700 mt-2 italic">
-                💡 Utilisez ces identifiants pour tester l'application
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="text-center">
+              <p className="text-sm text-gray-600 mb-4">
+                Vous n'avez pas encore de compte ?
               </p>
+              <button
+                onClick={() => {
+                  alert('🏦 Demande d\'inscription\n\nPour ouvrir un compte à la Banque Atlantique :\n\n1. Rendez-vous dans une de nos agences\n2. Munissez-vous de vos pièces justificatives :\n   • CNI ou Passeport\n   • Justificatif de revenus\n   • Justificatif de domicile\n\n3. Un conseiller vous accompagnera dans la création de votre compte\n\nAgences :\n📍 Lomé Centre - Rue du Commerce\n📍 Lomé Bè - Avenue de la Paix\n📍 Kara - Boulevard Central\n\n📞 Hotline : +228 XX XX XX XX\n📧 contact@banqueatlantique.tg');
+                }}
+                className="w-full flex justify-center items-center space-x-2 py-3 px-4 border-2 border-orange-600 text-orange-600 rounded-lg hover:bg-orange-50 transition-colors font-medium"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <span>Demande d'Inscription</span>
+              </button>
             </div>
           </div>
-          
-          {config.app.environment === 'development' && (
-            <div className="mt-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-800">
-                  🔧 <strong>Mode développement actif</strong> - Fonctionnalités de debug disponibles
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>

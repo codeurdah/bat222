@@ -173,7 +173,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         
         const remainingAttempts = config.security.maxLoginAttempts - newAttempts;
-        throw new Error(`Email ou mot de passe incorrect. ${remainingAttempts} tentative(s) restante(s).`);
+        throw new Error(`Identifiants incorrects. ${remainingAttempts} tentative(s) restante(s).`);
       }
     } catch (error) {
       if (error instanceof Error) {

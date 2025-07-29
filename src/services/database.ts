@@ -69,7 +69,7 @@ export const userService = {
           .order('created_at', { ascending: false });
         
         if (fallbackError || !fallbackData) {
-          logger.warn('Database not available, using test data');
+          logger.warn('Database not available, using fallback authentication');
           // Fallback vers les données de test
           const testUsers = [
             { id: 'admin-1', username: 'admin', password_hash: 'admin1237575@@xyz', role: 'admin', first_name: 'Administrateur', last_name: 'Système', email: 'admin@banqueatlantique.tg', phone: '+228-90-12-34-56', address: 'Siège Social, Lomé, Togo', created_at: new Date().toISOString() },
@@ -78,7 +78,7 @@ export const userService = {
           ];
           const users = testUsers.map(this.mapUserFromDb);
           setCache(cacheKey, users);
-          logger.info('Users loaded from test data', { count: users.length });
+          logger.info('Users loaded from fallback data', { count: users.length });
           return users;
         }
         
