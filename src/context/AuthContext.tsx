@@ -92,12 +92,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       let error = null;
       
       try {
-        const { data, error: dbError } = await supabase
+        // Première tentative : authentification par email
+        let { data, error: dbError } = await supabase
           .from('users')
           .select('*')
-          .or(`email.eq.${email},username.eq.${email}`)
+          .eq('email', email)
           .eq('password_hash', password)
           .maybeSingle();
+        
+        // Si pas trouvé par email, essayer par username
+        if (!data && !dbError) {
+          const result = await supabase
+            .from('users')
+            .select('*')
+            .eq('username', email)
+            .eq('password_hash', password)
+            .maybeSingle();
+          
+          data = result.data;
+          dbError = result.error;
+        }
         
         users = data;
         error = dbError;
