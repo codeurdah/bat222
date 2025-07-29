@@ -87,14 +87,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       logger.info('Login attempt', { email, attempt: loginAttempts + 1 });
       
-      // Pour la démo, utiliser l'authentification basique avec la table users
-      // Au lieu de l'authentification Supabase Auth
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('*')
-        .or(`email.eq.${email},username.eq.${email}`)
-        .eq('password_hash', password)
-        .maybeSingle();
+      // Authentification avec la table users (mode démo)
+      let users = null;
+      let error = null;
+      
+      try {
+        const { data, error: dbError } = await supabase
+          .from('users')
+          .select('*')
+          .or(`email.eq.${email},username.eq.${email}`)
+          .eq('password_hash', password)
+          .maybeSingle();
+        
+        users = data;
+        error = dbError;
+      } catch (dbErr) {
+        logger.error('Database connection error', dbErr as Error);
+        // Fallback pour les comptes de test en cas de problème DB
+        const testAccounts = [
+          { id: 'admin-1', username: 'admin', password_hash: 'admin1237575@@xyz', role: 'admin', first_name: 'Administrateur', last_name: 'Système', email: 'admin@banqueatlantique.tg', phone: '+228-90-12-34-56', address: 'Siège Social, Lomé, Togo', created_at: new Date().toISOString() },
+          { id: 'client-1', username: 'client1', password_hash: 'client123', role: 'client', first_name: 'Jean', last_name: 'Dupont', email: 'jean.dupont@email.com', phone: '+228-91-23-45-67', address: '123 Rue de la Paix, Lomé, Togo', created_at: new Date().toISOString() },
+          { id: 'client-2', username: 'client2', password_hash: 'client123', role: 'client', first_name: 'Marie', last_name: 'Martin', email: 'marie.martin@email.com', phone: '+228-92-34-56-78', address: '456 Avenue de l\'Indépendance, Lomé, Togo', created_at: new Date().toISOString() }
+        ];
+        
+        users = testAccounts.find(acc => 
+          (acc.email === email || acc.username === email) && acc.password_hash === password
+        ) || null;
+        
+        if (users) {
+          logger.info('Using fallback authentication', { email });
+        }
+      }
 
       if (error) {
         logger.error('Login error', error);

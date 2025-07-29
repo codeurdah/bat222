@@ -12,12 +12,10 @@ if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KE
     hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY
   });
   
-  if (import.meta.env.DEV) {
-    console.error('❌ Variables d\'environnement Supabase manquantes !');
-    console.error('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? '✅ Définie' : '❌ Manquante');
-    console.error('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Manquante');
-    console.error('💡 Veuillez configurer ces variables dans votre fichier .env');
-  }
+  console.warn('⚠️ Variables d\'environnement Supabase manquantes - Mode fallback activé');
+  console.warn('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? '✅ Définie' : '❌ Manquante');
+  console.warn('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Manquante');
+  console.warn('💡 L\'application fonctionnera avec les comptes de test intégrés');
 }
 
 // Validation de l'URL

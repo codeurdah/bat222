@@ -3,7 +3,7 @@ export const config = {
   app: {
     name: import.meta.env.VITE_APP_NAME || 'Banque Atlantique',
     version: import.meta.env.VITE_APP_VERSION || '1.0.0',
-    environment: import.meta.env.VITE_APP_ENV || 'production',
+    environment: import.meta.env.VITE_APP_ENV || 'development',
   },
   api: {
     baseUrl: import.meta.env.VITE_API_URL || 'https://api.banqueatlantique.tg',
