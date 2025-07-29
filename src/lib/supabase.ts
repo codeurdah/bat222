@@ -59,22 +59,3 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 supabase.auth.onAuthStateChange((event, session) => {
   logger.info('Auth state changed', { event, userId: session?.user?.id });
 });
-
-// Error handling for Supabase operations
-const originalFrom = supabase.from;
-supabase.from = function(table: string) {
-  const query = originalFrom.call(this, table);
-  const originalSelect = query.select;
-  
-  query.select = function(...args: any[]) {
-    const result = originalSelect.apply(this, args);
-    return result.then((response: any) => {
-      if (response.error) {
-        logger.error(`Supabase query error on table ${table}`, response.error);
-      }
-      return response;
-    });
-  };
-  
-  return query;
-} as any;
