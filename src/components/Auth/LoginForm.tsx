@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { config } from '../../config/environment';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -8,25 +9,31 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginAttempts, isLocked } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (isLocked) {
+      setError('Compte temporairement verrouillé. Veuillez patienter.');
+      return;
+    }
+    
     setIsLoading(true);
     
     try {
-      const success = await login(email, password);
-      if (!success) {
-        setError('Email ou mot de passe incorrect');
-      }
+      await login(email, password);
     } catch (error) {
-      setError('Erreur de connexion. Veuillez réessayer.');
+      setError(error instanceof Error ? error.message : 'Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const getRemainingAttempts = () => {
+    return config.security.maxLoginAttempts - loginAttempts;
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -42,6 +49,13 @@ const LoginForm: React.FC = () => {
           <p className="text-gray-600">
             Accédez à votre espace de gestion
           </p>
+          {config.app.environment === 'production' && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
+                🔒 Connexion sécurisée SSL - Vos données sont protégées
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow-lg p-8">
@@ -60,6 +74,7 @@ const LoginForm: React.FC = () => {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLocked}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Entrez votre email"
                 />
@@ -80,6 +95,7 @@ const LoginForm: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLocked}
                   className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   placeholder="Entrez votre mot de passe"
                 />
@@ -87,6 +103,7 @@ const LoginForm: React.FC = () => {
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLocked}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
@@ -103,9 +120,20 @@ const LoginForm: React.FC = () => {
               </div>
             )}
 
+            {loginAttempts > 0 && !isLocked && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg">
+                ⚠️ {getRemainingAttempts()} tentative(s) restante(s) avant verrouillage temporaire
+              </div>
+            )}
+
+            {isLocked && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                🔒 Compte temporairement verrouillé pour 15 minutes suite à trop de tentatives échouées
+              </div>
+            )}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isLocked}
               className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
@@ -113,12 +141,15 @@ const LoginForm: React.FC = () => {
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                   <span>Connexion...</span>
                 </div>
+              ) : isLocked ? (
+                'Compte verrouillé'
               ) : (
                 'Se connecter'
               )}
             </button>
           </form>
 
+          {config.app.environment === 'development' && (
 
         <div className="mt-6 pt-6 border-t border-gray-200">
           <div className="text-center">
@@ -138,8 +169,20 @@ const LoginForm: React.FC = () => {
             </button>
           </div>
         </div>
+          )}
+          
+          {config.app.environment === 'development' && (
           <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">🧪 Mode Développement - Comptes de test</h4>
+              <div className="space-y-2 text-xs text-blue-800">
+                <div><strong>Admin:</strong> admin / admin1237575@@xyz</div>
+                <div><strong>Client 1:</strong> client1 / client123</div>
+                <div><strong>Client 2:</strong> client2 / client123</div>
+              </div>
+            </div>
           </div>
+          )}
         </div>
       </div>
     </div>

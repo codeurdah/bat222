@@ -1,37 +1,83 @@
 import { supabase } from '../lib/supabase';
 import { User, Account, Transaction, LoanApplication, Loan } from '../types';
 import { logger } from '../utils/logger';
+import { config } from '../config/environment';
 
+// Cache management
+const cache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = config.performance.cacheTimeout;
+
+function getCacheKey(operation: string, params?: any): string {
+  return `${operation}_${JSON.stringify(params || {})}`;
+}
+
+function getFromCache<T>(key: string): T | null {
+  const cached = cache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    logger.debug('Cache hit', { key });
+    return cached.data;
+  }
+  if (cached) {
+    cache.delete(key);
+    logger.debug('Cache expired', { key });
+  }
+  return null;
+}
+
+function setCache<T>(key: string, data: T): void {
+  cache.set(key, { data, timestamp: Date.now() });
+  logger.debug('Cache set', { key });
+}
+
+function clearCachePattern(pattern: string): void {
+  for (const key of cache.keys()) {
+    if (key.includes(pattern)) {
+      cache.delete(key);
+    }
+  }
+  logger.debug('Cache cleared', { pattern });
+}
 // Service pour les utilisateurs
 export const userService = {
   async getAll(): Promise<User[]> {
+    const cacheKey = getCacheKey('users_all');
+    const cached = getFromCache<User[]>(cacheKey);
+    if (cached) return cached;
+    
     try {
-      console.log('🔍 Tentative de récupération de tous les utilisateurs...');
+      logger.info('Fetching all users from database');
       
       // Utiliser le service role pour contourner RLS
       const { data, error } = await supabase.rpc('get_all_users');
       
       if (error && error.code === '42883') {
         // Si la fonction n'existe pas, utiliser la méthode normale
+        logger.warn('RPC function not available, using fallback');
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('users')
           .select('*')
           .order('created_at', { ascending: false });
         
         if (fallbackError) {
-          console.error('❌ Erreur Supabase lors de la récupération des utilisateurs:', fallbackError);
+          logger.error('Database error fetching users', fallbackError);
           throw fallbackError;
         }
-        console.log('✅ Utilisateurs récupérés avec succès (fallback):', fallbackData?.length || 0);
-        return (fallbackData || []).map(this.mapUserFromDb);
+        
+        const users = (fallbackData || []).map(this.mapUserFromDb);
+        setCache(cacheKey, users);
+        logger.info('Users fetched successfully (fallback)', { count: users.length });
+        return users;
       }
 
       if (error) {
-        console.error('❌ Erreur Supabase lors de la récupération des utilisateurs:', error);
+        logger.error('RPC error fetching users', error);
         throw error;
       }
-      console.log('✅ Utilisateurs récupérés avec succès:', data?.length || 0);
-      return (data || []).map(this.mapUserFromDb);
+      
+      const users = (data || []).map(this.mapUserFromDb);
+      setCache(cacheKey, users);
+      logger.info('Users fetched successfully', { count: users.length });
+      return users;
     } catch (error) {
       logger.error('Error fetching users', error as Error);
       throw error;
@@ -54,15 +100,26 @@ export const userService = {
   },
 
   async getById(id: string): Promise<User | null> {
+    const cacheKey = getCacheKey('user_by_id', { id });
+    const cached = getFromCache<User | null>(cacheKey);
+    if (cached !== null) return cached;
+    
     try {
+      logger.debug('Fetching user by ID', { id });
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', id)
         .maybeSingle();
 
-      if (error) throw error;
-      return data ? this.mapUserFromDb(data) : null;
+      if (error) {
+        logger.error('Error fetching user by ID', error, { id });
+        throw error;
+      }
+      
+      const user = data ? this.mapUserFromDb(data) : null;
+      setCache(cacheKey, user);
+      return user;
     } catch (error) {
       logger.error('Error fetching user by ID', error as Error);
       return null;
@@ -70,15 +127,26 @@ export const userService = {
   },
 
   async getByUsername(username: string): Promise<User | null> {
+    const cacheKey = getCacheKey('user_by_username', { username });
+    const cached = getFromCache<User | null>(cacheKey);
+    if (cached !== null) return cached;
+    
     try {
+      logger.debug('Fetching user by username', { username });
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('username', username)
         .single();
 
-      if (error) throw error;
-      return data ? this.mapUserFromDb(data) : null;
+      if (error) {
+        logger.error('Error fetching user by username', error, { username });
+        throw error;
+      }
+      
+      const user = data ? this.mapUserFromDb(data) : null;
+      setCache(cacheKey, user);
+      return user;
     } catch (error) {
       logger.error('Error fetching user by username', error as Error);
       return null;
@@ -87,13 +155,10 @@ export const userService = {
 
   async create(user: Omit<User, 'id' | 'createdAt'>): Promise<User> {
     try {
-      console.log('🔍 Tentative de création d\'utilisateur avec contournement RLS...');
+      logger.info('Creating new user', { username: user.username, role: user.role });
       
-      console.log('🔍 Tentative de création d\'utilisateur:', {
-        username: user.username,
-        email: user.email,
-        role: user.role
-      });
+      // Clear users cache
+      clearCachePattern('users_');
       
       // Essayer d'abord avec une fonction RPC qui contourne RLS
       let data, error;
@@ -117,11 +182,12 @@ export const userService = {
         if (!rpcError) {
           data = rpcData;
           error = null;
+          logger.info('User created via RPC', { userId: data?.id });
         } else {
           throw new Error('RPC function not available');
         }
       } catch (rpcErr) {
-        console.log('🔄 RPC non disponible, utilisation de la méthode directe...');
+        logger.warn('RPC not available, using direct method');
         
         // Fallback vers insertion directe
         const { data: insertData, error: insertError } = await supabase
@@ -141,17 +207,23 @@ export const userService = {
         
         data = insertData;
         error = insertError;
+        
+        if (!error) {
+          logger.info('User created via direct insert', { userId: data?.id });
+        }
       }
 
       if (error) {
-        console.error('❌ Erreur Supabase lors de la création d\'utilisateur:', error);
-        console.error('Code d\'erreur:', error.code);
-        console.error('Message:', error.message);
-        console.error('Détails:', error.details);
+        logger.error('Error creating user', error, {
+          username: user.username,
+          email: user.email,
+          code: error.code,
+          details: error.details
+        });
         throw error;
       }
       
-      console.log('✅ Utilisateur créé avec succès:', data);
+      logger.info('User created successfully', { userId: data.id, username: user.username });
       return this.mapUserFromDb(data);
     } catch (error) {
       logger.error('Error creating user', error as Error);
@@ -161,6 +233,12 @@ export const userService = {
 
   async update(id: string, updates: Partial<User>): Promise<User> {
     try {
+      logger.info('Updating user', { id, updates: Object.keys(updates) });
+      
+      // Clear user cache
+      clearCachePattern('user_');
+      clearCachePattern('users_');
+      
       const { data, error } = await supabase
         .from('users')
         .update({
@@ -174,7 +252,12 @@ export const userService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Error updating user', error, { id });
+        throw error;
+      }
+      
+      logger.info('User updated successfully', { id });
       return {
         id: data.id,
         username: data.username,
@@ -195,7 +278,12 @@ export const userService = {
 
   async delete(id: string): Promise<void> {
     try {
-      console.log('🗑️ Suppression du client:', id);
+      logger.info('Deleting user', { id });
+      
+      // Clear all user-related cache
+      clearCachePattern('user_');
+      clearCachePattern('users_');
+      clearCachePattern('accounts_');
       
       // Essayer d'abord avec une fonction RPC qui contourne RLS
       try {
@@ -208,13 +296,13 @@ export const userService = {
         }
         
         if (!rpcError) {
-          console.log('✅ Client supprimé via RPC');
+          logger.info('User deleted via RPC', { id });
           return;
         } else {
           throw new Error('RPC function not available');
         }
       } catch (rpcErr) {
-        console.log('🔄 RPC non disponible, utilisation de la méthode directe...');
+        logger.warn('RPC not available for deletion, using direct method');
         
         // Fallback vers suppression directe
         const { error: deleteError } = await supabase
@@ -223,12 +311,12 @@ export const userService = {
           .eq('id', id);
         
         if (deleteError) {
-          console.error('❌ Erreur Supabase lors de la suppression:', deleteError);
+          logger.error('Error deleting user', deleteError, { id });
           throw deleteError;
         }
+        
+        logger.info('User deleted via direct method', { id });
       }
-      
-      console.log('✅ Client supprimé avec succès');
     } catch (error) {
       logger.error('Error deleting user', error as Error);
       throw error;
@@ -239,15 +327,24 @@ export const userService = {
 // Service pour les comptes
 export const accountService = {
   async getByUserId(userId: string): Promise<Account[]> {
+    const cacheKey = getCacheKey('accounts_by_user', { userId });
+    const cached = getFromCache<Account[]>(cacheKey);
+    if (cached) return cached;
+    
     try {
+      logger.debug('Fetching accounts by user ID', { userId });
       const { data, error } = await supabase
         .from('accounts')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return (data || []).map(account => ({
+      if (error) {
+        logger.error('Error fetching accounts by user ID', error, { userId });
+        throw error;
+      }
+      
+      const accounts = (data || []).map(account => ({
         id: account.id,
         userId: account.user_id,
         accountNumber: account.account_number,
@@ -257,6 +354,10 @@ export const accountService = {
         status: account.status,
         createdAt: account.created_at
       }));
+      
+      setCache(cacheKey, accounts);
+      logger.debug('Accounts fetched successfully', { userId, count: accounts.length });
+      return accounts;
     } catch (error) {
       logger.error('Error fetching accounts by user ID', error as Error);
       throw error;
@@ -264,14 +365,23 @@ export const accountService = {
   },
 
   async getAll(): Promise<Account[]> {
+    const cacheKey = getCacheKey('accounts_all');
+    const cached = getFromCache<Account[]>(cacheKey);
+    if (cached) return cached;
+    
     try {
+      logger.debug('Fetching all accounts');
       const { data, error } = await supabase
         .from('accounts')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return (data || []).map(account => ({
+      if (error) {
+        logger.error('Error fetching all accounts', error);
+        throw error;
+      }
+      
+      const accounts = (data || []).map(account => ({
         id: account.id,
         userId: account.user_id,
         accountNumber: account.account_number,
@@ -281,6 +391,10 @@ export const accountService = {
         status: account.status,
         createdAt: account.created_at
       }));
+      
+      setCache(cacheKey, accounts);
+      logger.debug('All accounts fetched successfully', { count: accounts.length });
+      return accounts;
     } catch (error) {
       logger.error('Error fetching all accounts', error as Error);
       throw error;
@@ -289,6 +403,15 @@ export const accountService = {
 
   async create(account: Omit<Account, 'id' | 'createdAt'>): Promise<Account> {
     try {
+      logger.info('Creating new account', { 
+        userId: account.userId, 
+        accountType: account.accountType,
+        currency: account.currency 
+      });
+      
+      // Clear accounts cache
+      clearCachePattern('accounts_');
+      
       const { data, error } = await supabase
         .from('accounts')
         .insert([{
@@ -302,7 +425,12 @@ export const accountService = {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Error creating account', error, { userId: account.userId });
+        throw error;
+      }
+      
+      logger.info('Account created successfully', { accountId: data.id, userId: account.userId });
       return {
         id: data.id,
         userId: data.user_id,

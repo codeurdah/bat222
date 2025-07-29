@@ -27,6 +27,19 @@
     <meta name="theme-color" content="#ea580c" />
     
     <title>Banque Atlantique - Système de Microfinance</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/BACI-Logo-slogan.png" as="image" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    
+    <!-- Performance hints -->
+    <meta http-equiv="Accept-CH" content="DPR, Viewport-Width, Width">
   </head>
   <body>
     <noscript>
@@ -38,5 +51,20 @@
     </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

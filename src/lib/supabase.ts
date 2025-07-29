@@ -1,31 +1,80 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
 // Validation des variables d'environnement
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-  console.error('❌ Variables d\'environnement Supabase manquantes !');
-  console.error('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? '✅ Définie' : '❌ Manquante');
-  console.error('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Manquante');
-  console.error('💡 Veuillez configurer ces variables dans votre fichier .env');
+  const error = new Error('Variables d\'environnement Supabase manquantes');
+  logger.error('Supabase configuration error', error, {
+    hasUrl: !!import.meta.env.VITE_SUPABASE_URL,
+    hasKey: !!import.meta.env.VITE_SUPABASE_ANON_KEY
+  });
+  
+  if (import.meta.env.DEV) {
+    console.error('❌ Variables d\'environnement Supabase manquantes !');
+    console.error('VITE_SUPABASE_URL:', import.meta.env.VITE_SUPABASE_URL ? '✅ Définie' : '❌ Manquante');
+    console.error('VITE_SUPABASE_ANON_KEY:', import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Définie' : '❌ Manquante');
+    console.error('💡 Veuillez configurer ces variables dans votre fichier .env');
+  }
 }
 
 // Validation de l'URL
 try {
   new URL(supabaseUrl);
-  console.log('✅ URL Supabase valide:', supabaseUrl);
+  logger.info('Supabase URL validated', { url: supabaseUrl });
 } catch (error) {
-  console.error('❌ URL Supabase invalide:', supabaseUrl);
-  console.log('💡 Veuillez configurer une URL valide dans VITE_SUPABASE_URL (ex: https://votre-projet.supabase.co)');
+  logger.error('Invalid Supabase URL', error as Error, { url: supabaseUrl });
+  
+  if (import.meta.env.DEV) {
+    console.error('❌ URL Supabase invalide:', supabaseUrl);
+    console.log('💡 Veuillez configurer une URL valide dans VITE_SUPABASE_URL (ex: https://votre-projet.supabase.co)');
+  }
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
   },
   db: {
     schema: 'public'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': `banque-atlantique-web@${import.meta.env.VITE_APP_VERSION || '1.0.0'}`
+    }
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
+    }
   }
 });
+
+// Connection monitoring
+supabase.auth.onAuthStateChange((event, session) => {
+  logger.info('Auth state changed', { event, userId: session?.user?.id });
+});
+
+// Error handling for Supabase operations
+const originalFrom = supabase.from;
+supabase.from = function(table: string) {
+  const query = originalFrom.call(this, table);
+  const originalSelect = query.select;
+  
+  query.select = function(...args: any[]) {
+    const result = originalSelect.apply(this, args);
+    return result.then((response: any) => {
+      if (response.error) {
+        logger.error(`Supabase query error on table ${table}`, response.error);
+      }
+      return response;
+    });
+  };
+  
+  return query;
+} as any;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger';
+import { config } from '../config/environment';
 
 // Variable globale pour désactiver temporairement le timer
 let sessionTimerDisabled = false;
@@ -8,8 +9,10 @@ let sessionTimerDisabled = false;
 // Fonction pour désactiver temporairement le timer
 export const disableSessionTimer = (duration: number = 10000) => {
   sessionTimerDisabled = true;
+  logger.debug('Session timer disabled', { duration });
   setTimeout(() => {
     sessionTimerDisabled = false;
+    logger.debug('Session timer re-enabled');
   }, duration);
 };
 
@@ -21,7 +24,7 @@ interface UseSessionTimeoutOptions {
 }
 
 export const useSessionTimeout = ({
-  timeoutMinutes = 5,
+  timeoutMinutes = Math.floor(config.security.sessionTimeout / 60000),
   warningMinutes = 1,
   onWarning,
   onTimeout
@@ -30,6 +33,7 @@ export const useSessionTimeout = ({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningRef = useRef<NodeJS.Timeout | null>(null);
   const lastActivityRef = useRef<number>(Date.now());
+  const warningShownRef = useRef<boolean>(false);
 
   const resetTimer = useCallback(() => {
     if (!isAuthenticated || sessionTimerDisabled) return;
@@ -42,11 +46,15 @@ export const useSessionTimeout = ({
       clearTimeout(warningRef.current);
     }
 
+    warningShownRef.current = false;
     lastActivityRef.current = Date.now();
 
     // Set warning timer (1 minute before timeout)
     const warningTime = (timeoutMinutes - warningMinutes) * 60 * 1000;
     warningRef.current = setTimeout(() => {
+      if (warningShownRef.current) return;
+      warningShownRef.current = true;
+      
       logger.info('Session warning triggered');
       if (onWarning) {
         onWarning();
@@ -98,6 +106,7 @@ export const useSessionTimeout = ({
     // Only reset if there's been significant time since last activity
     if (timeSinceLastActivity > 120000) { // 2 minutes threshold to avoid any interference
       resetTimer();
+      logger.debug('User activity detected, timer reset');
     }
   }, [resetTimer, isAuthenticated]);
 
@@ -115,6 +124,7 @@ export const useSessionTimeout = ({
 
     // Start the timer when authenticated
     resetTimer();
+    logger.info('Session timeout initialized', { timeoutMinutes });
 
     // Activity event listeners - exclude some events that shouldn't reset session
     const events = [
@@ -165,6 +175,7 @@ export const useSessionTimeout = ({
       });
       
       document.removeEventListener('click', handleClick, true);
+      logger.debug('Session timeout cleanup completed');
     };
   }, [isAuthenticated, resetTimer, trackActivity]);
 
@@ -177,6 +188,8 @@ export const useSessionTimeout = ({
       const remaining = (timeoutMinutes * 60 * 1000) - elapsed;
       return Math.max(0, Math.floor(remaining / 1000));
     },
-    isActive: () => isAuthenticated && timeoutRef.current !== null
+    isActive: () => isAuthenticated && timeoutRef.current !== null,
+    getLastActivity: () => new Date(lastActivityRef.current),
+    isTimerDisabled: () => sessionTimerDisabled
   };
 };
