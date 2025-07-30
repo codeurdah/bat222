@@ -1,16 +1,15 @@
 // Dans vite.config.ts
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
+import { resolve } from 'path'; // Vous pouvez laisser cette ligne, elle n'est pas problématique.
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  // Ajoutez ces lignes pour le débogage des variables d'environnement de Netlify
+  // Conservez les logs de débogage existants pour l'instant
   console.log('Vite Config Debug: NODE_ENV:', process.env.NODE_ENV);
   console.log('Vite Config Debug: VITE_APP_ENV:', process.env.VITE_APP_ENV);
   console.log('Vite Config Debug: VITE_SUPABASE_URL (from process.env):', process.env.VITE_SUPABASE_URL);
   console.log('Vite Config Debug: VITE_SUPABASE_ANON_KEY (from process.env):', process.env.VITE_SUPABASE_ANON_KEY ? 'Key is present' : 'Key is missing');
-  // Fin des lignes de débogage
 
   return {
     plugins: [react()],
@@ -66,9 +65,15 @@ export default defineConfig(({ mode }) => {
       exclude: ['lucide-react'],
     },
     define: {
+      // Définitions existantes
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
       __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
       __COMMIT_HASH__: JSON.stringify(process.env.COMMIT_HASH || 'unknown'),
+      // NOUVEAU : Définir explicitement les variables d'environnement Supabase pour le client
+      'import.meta.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL),
+      'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY),
+      // Corriger VITE_APP_ENV s'il est undefined
+      'import.meta.env.VITE_APP_ENV': JSON.stringify(process.env.VITE_APP_ENV || 'production'),
     },
     esbuild: {
       legalComments: 'none',
