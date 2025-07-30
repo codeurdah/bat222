@@ -1,8 +1,14 @@
+// src/lib/supabase.ts
 import { createClient } from '@supabase/supabase-js';
 import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
+
+// Ajoutez ces lignes console.log
+console.log('Supabase Client Init: URL =', supabaseUrl);
+console.log('Supabase Client Init: Anon Key present =', !!supabaseAnonKey);
+
 
 // Validation des variables d'environnement
 if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {

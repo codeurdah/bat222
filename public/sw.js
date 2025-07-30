@@ -1,7 +1,8 @@
-// Service Worker for Banque Atlantique
-const CACHE_NAME = 'banque-atlantique-v1.0.0';
-const STATIC_CACHE = 'banque-atlantique-static-v1.0.0';
-const DYNAMIC_CACHE = 'banque-atlantique-dynamic-v1.0.0';
+// public/sw.js
+// Changez ces lignes pour incrémenter la version
+const CACHE_NAME = 'banque-atlantique-v1.0.1'; // Incrémentez la version
+const STATIC_CACHE = 'banque-atlantique-static-v1.0.1'; // Incrémentez la version
+const DYNAMIC_CACHE = 'banque-atlantique-dynamic-v1.0.1'; // Incrémentez la version
 
 // Files to cache immediately
 const STATIC_FILES = [
